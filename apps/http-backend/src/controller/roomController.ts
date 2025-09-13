@@ -7,6 +7,7 @@ const getRoomContent = (req: Request, res: Response) => {
             message: "Room content fetched successfully.",
             roomId: "123"
         });
+        return;
     } catch (error) {
         res.status(500).json({
             success: false,
@@ -23,6 +24,7 @@ const addNewRoom = (req: Request, res: Response) => {
             message: "Room is created successfully.",
             roomId: "123"
         });
+        return;
     } catch (error) {
         res.status(500).json({
             success: false,
@@ -40,6 +42,7 @@ const deleteRoom = (req: Request, res: Response) => {
             message: "Room is deleted successfully.",
             roomId: "123"
         })
+        return;
     } catch (error) {
         res.status(500).json({
             success: false,
@@ -56,7 +59,8 @@ const updateRoomName = (req: Request, res: Response) => {
             success: true,
             message: "Room name is updated successfully.",
             roomId: "123"
-        })
+        });
+        return;
     } catch (error) {
         res.status(500).json({
             success: false,

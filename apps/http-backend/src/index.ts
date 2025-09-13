@@ -5,6 +5,7 @@ import roomRoutes from "./routes/roomRoutes.js";
 
 const app = express();
 dotenv.config({path: "../../.env"});
+app.use(express.json());
 
 const HTTP_PORT = process.env.HTTP_PORT;
 

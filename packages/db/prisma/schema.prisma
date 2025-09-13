@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String @id @default(uuid())
+  name     String
+  email    String @unique
+  password String
+  Rooms    Room[]
+}
+
+model Room {
+  id      String @id @default(uuid())
+  slug    String
+  adminId String
+  admin   User   @relation(fields: [adminId], references: [id])
+  Chats   Chat[]
+}
+
+model Chat {
+  id        String   @id @default(uuid())
+  roomId    String
+  shapeId   String
+  createdAt DateTime @default(now())
+
+  room      Room       @relation(fields: [roomId], references: [id])
+  rectangle Rectangle?
+  circle    Circle?
+  text      TextShape?
+  stroke    Stroke?
+}
+
+model Rectangle {
+  id     String @id @default(uuid())
+  chat   Chat   @relation(fields: [id], references: [id])
+  startX Int
+  startY Int
+  endX   Int
+  endY   Int
+  color  String
+}
+
+model Circle {
+  id     String @id @default(uuid())
+  chat   Chat   @relation(fields: [id], references: [id])
+  x      Int
+  y      Int
+  radius Int
+  color  String
+}
+
+model TextShape {
+  id       String @id @default(uuid())
+  chat     Chat   @relation(fields: [id], references: [id])
+  x        Int
+  y        Int
+  content  String
+  fontSize Int    @default(14)
+  color    String
+}
+
+model Stroke {
+  id     String @id @default(uuid())
+  chat   Chat   @relation(fields: [id], references: [id])
+  points Json   // e.g. [[0,0],[10,20],[20,25]]
+  color  String
+}
