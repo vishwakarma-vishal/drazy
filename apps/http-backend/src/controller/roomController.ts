@@ -1,72 +1,158 @@
 import type { Request, Response } from "express";
+import { extendedRequest } from "../middleware/auth.js";
+import { client } from "@repo/db";
 
-const getRoomContent = (req: Request, res: Response) => {
+const addNewRoom = async (req: extendedRequest, res: Response) => {
     try {
+        const userId = req.userId;
+        const { slug } = req.body;
+
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized"
+            });
+        }
+
+        const createdRoom = await client.room.create({
+            data: {
+                slug,
+                adminId: userId
+            }
+        });
+
+        res.status(201).json({
+            success: true,
+            message: "Room is created successfully.",
+            slug: createdRoom.slug,
+            roomId: createdRoom.id
+        });
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({
+            success: false,
+            message: "Internal server error."
+        });
+    }
+}
+
+const getRoomContent = async (req: extendedRequest, res: Response) => {
+    try {
+        const { slug } = req.params;
+
+        const room = await client.room.findFirst({
+            where: { slug }
+        });
+
+        if (!room) {
+            return res.status(404).json({
+                success: false,
+                message: "Room doesn't exist."
+            })
+        }
+
+        const roomContent = await client.chat.findMany({
+            where: {
+                roomId: room.id
+            }
+        })
+
         res.status(200).json({
             success: true,
             message: "Room content fetched successfully.",
-            roomId: "123"
+            content: roomContent
         });
-        return;
     } catch (error) {
         res.status(500).json({
             success: false,
             message: "Internal server error."
         });
-        return;
     }
 }
 
-const addNewRoom = (req: Request, res: Response) => {
+const deleteRoom = async (req: extendedRequest, res: Response) => {
     try {
-        res.status(200).json({
-            success: true,
-            message: "Room is created successfully.",
-            roomId: "123"
-        });
-        return;
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: "Internal server error."
-        });
-        return;
-    }
-}
+        const userId = req.userId;
+        const { slug } = req.params;
 
-const deleteRoom = (req: Request, res: Response) => {
-    try {  
+        const room = await client.room.findFirst({
+            where: { slug }
+        });
 
-        res.status(200).json({
-            success: true,
-            message: "Room is deleted successfully.",
-            roomId: "123"
+        if (!room) {
+            return res.status(404).json({
+                success: false,
+                message: "Room doesn't exist."
+            })
+        }
+
+        if (room.adminId != userId) {
+            return res.status(401).json({
+                success: false,
+                message: "Permission denied."
+            })
+        }
+
+        await client.room.delete({
+            where: {
+                id: room.id
+            }
         })
-        return;
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: "Internal server error."
-        });
-        return;
-    }
-}
-
-const updateRoomName = (req: Request, res: Response) => {
-    try {
 
         res.status(200).json({
             success: true,
-            message: "Room name is updated successfully.",
-            roomId: "123"
+            message: "Room deleted successfully.",
         });
-        return;
     } catch (error) {
         res.status(500).json({
             success: false,
             message: "Internal server error."
         });
-        return;
+    }
+}
+
+const updateRoomName = async (req: extendedRequest, res: Response) => {
+    try {
+        const userId = req.userId;
+        const { slug } = req.params;
+        const { newSlug } = req.body;
+
+        const room = await client.room.findFirst({
+            where: { slug }
+        });
+
+        if (!room) {
+            return res.status(404).json({
+                success: false,
+                message: "Room doesn't exist."
+            })
+        }
+
+        if (room.adminId != userId) {
+            return res.status(401).json({
+                success: false,
+                message: "Permission denied."
+            })
+        }
+
+        await client.room.update({
+            data: {
+                slug: newSlug
+            },
+            where: {
+                id: room.id
+            }
+        })
+
+        res.status(200).json({
+            success: true,
+            message: "Room name updated successfully.",
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Internal server error."
+        });
     }
 }
 

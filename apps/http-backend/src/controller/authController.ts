@@ -17,7 +17,7 @@ const singUpController = async (req: Request, res: Response) => {
             }
         });
 
-        res.status(200).json({
+        res.status(201).json({
             success: true,
             message: "user signup successfully.",
         });
@@ -71,7 +71,7 @@ const signInController = async (req: Request, res: Response) => {
         }
 
         const token = jwt.sign({
-            data: existingUser.id
+            data: {id: existingUser.id}
         }, SECRET, { expiresIn: '1h' });
 
 
