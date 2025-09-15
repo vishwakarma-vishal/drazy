@@ -30,7 +30,7 @@ wss.on("connection", (ws, request) => {
         console.log("parsed ", parsedData);
 
         if (parsedData.type === "join") {
-             joinRoom(userId, parsedData.roomId);
+            joinRoom(ws, userId, parsedData.roomId);
         }
 
         if (parsedData.type === "chat") {

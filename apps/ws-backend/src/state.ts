@@ -21,15 +21,21 @@ const addUser = (userId: string, ws: WebSocket) => {
     });
 }
 
-const joinRoom = async (userId: string, roomId: string) => {
+const joinRoom = async (ws: WebSocket, userId: string, roomId: string) => {
     // check is room is created or not
     const room = await client.room.findFirst({
-        where:{
+        where: {
             id: roomId
         }
     });
 
-    if (!room) return;
+    if (!room) {
+        ws.send(JSON.stringify({
+            success: false,
+            message: "Room not found"
+        }));
+        return;
+    };
 
     const currUser = users.get(userId);
     if (!currUser) return;

@@ -59,6 +59,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@repo/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       axios:
         specifier: ^1.12.2
         version: 1.12.2

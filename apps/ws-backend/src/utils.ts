@@ -3,9 +3,7 @@ import jwt from "jsonwebtoken";
 import { IncomingMessage } from "http";
 
 interface MyJwtToken extends JwtPayload {
-    data?: {
         id: string;
-    };
 }
 
 const validateUser = (request: IncomingMessage): string | null => {
@@ -16,6 +14,8 @@ const validateUser = (request: IncomingMessage): string | null => {
         const url = new URL(request.url || "/", base);
         token = url.searchParams.get("token");
 
+        console.log(token);
+
         if (!token) return null;
 
         const JWT_SECRET = process.env.JWT_SECRET;
@@ -23,7 +23,7 @@ const validateUser = (request: IncomingMessage): string | null => {
         if (!JWT_SECRET) throw new Error("JWT_SECRET is not defined in environment variables");
 
         const decode = jwt.verify(token, JWT_SECRET) as MyJwtToken;
-        return decode.data?.id || null;
+        return decode.id || null;
     } catch (error) {
         // console.log("Jwt vefification failed with error ->", error);
         return null;
