@@ -1,3 +1,4 @@
+import { client } from "@repo/db";
 import { WebSocket } from "ws";
 
 // state managment
@@ -17,10 +18,19 @@ const addUser = (userId: string, ws: WebSocket) => {
         userId,
         ws,
         rooms: new Set()
-    })
+    });
 }
 
-const joinRoom = (userId: string, roomId: string) => {
+const joinRoom = async (userId: string, roomId: string) => {
+    // check is room is created or not
+    const room = await client.room.findFirst({
+        where:{
+            id: roomId
+        }
+    });
+
+    if (!room) return;
+
     const currUser = users.get(userId);
     if (!currUser) return;
     // add room to user
@@ -70,6 +80,17 @@ const brodcastMessage = (ws: WebSocket, roomId: string, message: string) => {
             users.get(user)?.ws.send(message);
         }
     })
+}
+
+// helper functions (use to debug)
+const printUser = () => {
+    console.log("Current user -> ")
+    users.forEach((user) => console.log(user));
+}
+
+const printRoom = () => {
+    console.log("Current room -> ");
+    rooms.forEach((room) => console.log(room));
 }
 
 export { addUser, joinRoom, leaveRoom, deleteUser, brodcastMessage };

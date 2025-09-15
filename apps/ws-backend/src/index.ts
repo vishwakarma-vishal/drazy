@@ -34,11 +34,11 @@ wss.on("connection", (ws, request) => {
 
     ws.on("message", (data) => {
         const parsedData = JSON.parse(data.toString());
-        
+
         console.log("parsed ", parsedData);
 
         if (parsedData.type === "join") {
-            joinRoom(userId, parsedData.roomId);
+             joinRoom(userId, parsedData.roomId);
         }
 
         if (parsedData.type === "chat") {
@@ -50,7 +50,7 @@ wss.on("connection", (ws, request) => {
         }
     });
 
-    ws.on("close", ()=> {
+    ws.on("close", () => {
         deleteUser(userId);
     })
 });
