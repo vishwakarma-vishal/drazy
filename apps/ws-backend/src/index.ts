@@ -8,28 +8,20 @@ const WS_PORT = process.env.WS_PORT;
 const wss = new WebSocketServer({ port: Number(WS_PORT) });
 
 wss.on("listening", () => {
-    console.log("ws server is running...");
+    console.log("ws server is running on port -> ", WS_PORT);
 });
 
 wss.on("connection", (ws, request) => {
     ws.on("error", console.error);
 
     // only authorized user can join the ws server
-    const url = new URL(request.url || "", `http://${request.headers.host}`);
-    const token = url.searchParams.get("token");
-
-    if (!token) {
-        ws.close(4001, "Missing token");
-        return;
-    }
-
-    const userId = validateUser(token);
+    const userId = validateUser(request);
     if (!userId) {
         ws.close(4002, "Invalid or expired token");
         return;
     }
 
-    // join web socket server (add in state)
+    // join server (add in state)
     addUser(userId, ws);
 
     ws.on("message", (data) => {
