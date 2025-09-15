@@ -1,8 +1,8 @@
 import { WebSocketServer } from "ws";
 import dotenv from "dotenv";
 dotenv.config({ path: "../../.env" });
-import jwt, { JwtPayload } from "jsonwebtoken";
-import { addUser, brodcastMessage, joinRoom } from "./state";
+import { addUser, brodcastMessage, deleteUser, joinRoom, leaveRoom } from "./state";
+import { validateUser } from "./utils";
 
 const WS_PORT = process.env.WS_PORT;
 const wss = new WebSocketServer({ port: Number(WS_PORT) });
@@ -42,27 +42,16 @@ wss.on("connection", (ws, request) => {
         }
 
         if (parsedData.type === "chat") {
-            brodcastMessage(parsedData.roomId, parsedData.message)
+            brodcastMessage(ws, parsedData.roomId, parsedData.message)
         }
+
+        if (parsedData.type === "leave") {
+            leaveRoom(userId, parsedData.roomId)
+        }
+    });
+
+    ws.on("close", ()=> {
+        deleteUser(userId);
     })
 });
 
-interface MyJwtToken extends JwtPayload {
-  data?: {
-    id: string;
-  };
-}
-
-const validateUser = (token: string) => {
-    try {
-        const JWT_SECRET = process.env.JWT_SECRET;
-
-        if (!JWT_SECRET) throw new Error("JWT_SECRET is not defined in environment variables");
-
-        const decode = jwt.verify(token, JWT_SECRET) as MyJwtToken;
-        return decode.data?.id;
-    } catch(error) {
-        console.log("Jwt vefification failed with error ->", error);
-        return null;
-    }
-}

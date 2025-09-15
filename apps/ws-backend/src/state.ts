@@ -1,3 +1,5 @@
+import { WebSocket } from "ws";
+
 // state managment
 interface UserI {
     userId: string,
@@ -60,12 +62,14 @@ const deleteUser = (userId: string) => {
     users.delete(userId);
 }
 
-const brodcastMessage = (roomId: string, message: string) => {
+const brodcastMessage = (ws: WebSocket, roomId: string, message: string) => {
     const userIds = rooms.get(roomId);
 
-    for (const user in userIds) {
-        users.get(user)?.ws.send(message);
-    }
+    userIds?.forEach((user) => {
+        if (users.get(user)?.ws != ws) {
+            users.get(user)?.ws.send(message);
+        }
+    })
 }
 
 export { addUser, joinRoom, leaveRoom, deleteUser, brodcastMessage };
