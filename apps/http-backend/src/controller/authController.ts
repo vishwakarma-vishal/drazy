@@ -3,7 +3,17 @@ import { client, Prisma } from "@repo/db"
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-const singUpController = async (req: Request, res: Response) => {
+//helper function
+
+const generateJWT = (user: { id: string }): string => {
+    const SECRET = process.env.JWT_SECRET;
+
+    if (!SECRET) throw new Error("JWT is not defined in the environment varible");
+
+    return jwt.sign({ id: user.id }, SECRET, { expiresIn: '1h' });
+}
+
+const signUpController = async (req: Request, res: Response) => {
     try {
         const { name, email, password } = req.body;
 
@@ -17,22 +27,23 @@ const singUpController = async (req: Request, res: Response) => {
             }
         });
 
+        const token = generateJWT(newUser);
+
         res.status(201).json({
             success: true,
             message: "user signup successfully.",
+            token: token
         });
     } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            if (error.code === "P2002") {
-                return res.status(400).json({
-                    status: false,
-                    message: "User already exist."
-                })
-            }
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+            return res.status(400).json({
+                success: false,
+                message: "User already exist."
+            });
         }
 
         res.status(500).json({
-            status: 500,
+            success: false,
             message: "Internal server error."
         });
     }
@@ -42,10 +53,8 @@ const signInController = async (req: Request, res: Response) => {
     try {
         const { email, password } = req.body;
 
-        const existingUser = await client.user.findFirst({
-            where: {
-                email: email
-            }
+        const existingUser = await client.user.findUnique({
+            where: { email }
         });
 
         if (!existingUser) {
@@ -64,16 +73,7 @@ const signInController = async (req: Request, res: Response) => {
             });
         }
 
-        const SECRET = process.env.JWT_SECRET;
-
-        if (!SECRET) {
-            throw new Error("JWT is not defined in the environment varible")
-        }
-
-        const token = jwt.sign({
-            data: {id: existingUser.id}
-        }, SECRET, { expiresIn: '1h' });
-
+        const token = generateJWT(existingUser);
 
         res.status(200).json({
             success: true,
@@ -82,11 +82,11 @@ const signInController = async (req: Request, res: Response) => {
         });
     } catch (error) {
         res.status(500).json({
-            status: 500,
+            sucess: false,
             message: "Internal server error."
         });
     }
 }
 
-export { signInController, singUpController };
+export { signInController, signUpController };
 
