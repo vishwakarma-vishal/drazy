@@ -38,10 +38,10 @@ const addNewRoom = async (req: extendedRequest, res: Response) => {
 
 const getRoomContent = async (req: extendedRequest, res: Response) => {
     try {
-        const { slug } = req.params;
+        const { id } = req.params;
 
-        const room = await client.room.findFirst({
-            where: { slug }
+        const room = await client.room.findUnique({
+            where: { id }
         });
 
         if (!room) {
@@ -70,55 +70,14 @@ const getRoomContent = async (req: extendedRequest, res: Response) => {
     }
 }
 
-const deleteRoom = async (req: extendedRequest, res: Response) => {
-    try {
-        const userId = req.userId;
-        const { slug } = req.params;
-
-        const room = await client.room.findFirst({
-            where: { slug }
-        });
-
-        if (!room) {
-            return res.status(404).json({
-                success: false,
-                message: "Room doesn't exist."
-            })
-        }
-
-        if (room.adminId != userId) {
-            return res.status(401).json({
-                success: false,
-                message: "Permission denied."
-            })
-        }
-
-        await client.room.delete({
-            where: {
-                id: room.id
-            }
-        })
-
-        res.status(200).json({
-            success: true,
-            message: "Room deleted successfully.",
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: "Internal server error."
-        });
-    }
-}
-
 const updateRoomName = async (req: extendedRequest, res: Response) => {
     try {
         const userId = req.userId;
-        const { slug } = req.params;
+        const { id } = req.params;
         const { newSlug } = req.body;
 
-        const room = await client.room.findFirst({
-            where: { slug }
+        const room = await client.room.findUnique({
+            where: { id }
         });
 
         if (!room) {
@@ -147,6 +106,47 @@ const updateRoomName = async (req: extendedRequest, res: Response) => {
         res.status(200).json({
             success: true,
             message: "Room name updated successfully.",
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Internal server error."
+        });
+    }
+}
+
+const deleteRoom = async (req: extendedRequest, res: Response) => {
+    try {
+        const userId = req.userId;
+        const { id } = req.params;
+
+        const room = await client.room.findUnique({
+            where: { id }
+        });
+
+        if (!room) {
+            return res.status(404).json({
+                success: false,
+                message: "Room doesn't exist."
+            })
+        }
+
+        if (room.adminId != userId) {
+            return res.status(401).json({
+                success: false,
+                message: "Permission denied."
+            })
+        }
+
+        await client.room.delete({
+            where: {
+                id: room.id
+            }
+        })
+
+        res.status(200).json({
+            success: true,
+            message: "Room deleted successfully.",
         });
     } catch (error) {
         res.status(500).json({

@@ -1,15 +1,16 @@
 import { NextFunction, Request, Response } from "express";
-import jwt, { JwtPayload } from "jsonwebtoken";
+import pkg from 'jsonwebtoken';
+const { verify, JsonWebTokenError, TokenExpiredError } = pkg;
 
 export interface extendedRequest extends Request {
     userId?: string
 }
 
-interface myJsonPayload extends JwtPayload {
+interface myJsonPayload extends pkg.JwtPayload {
     id: string
 }
 
-export const verify = (req: extendedRequest, res: Response, next: NextFunction) => {
+export const auth = (req: extendedRequest, res: Response, next: NextFunction) => {
     try {
         const authHeader = req.headers.authorization;
         if (!authHeader) {
@@ -33,12 +34,32 @@ export const verify = (req: extendedRequest, res: Response, next: NextFunction) 
         const JWT_SECRET = process.env.JWT_SECRET;
         if (!JWT_SECRET) throw new Error("JWT_SECRET is not defined in environment variables");
 
-        const decodedToken = jwt.verify(token, JWT_SECRET) as myJsonPayload;
+        const decodedToken = verify(token, JWT_SECRET) as myJsonPayload;
 
-        (req as extendedRequest).userId = decodedToken.data.id;
+        if (!decodedToken.id) {
+            return res.status(401).json({
+                success: false,
+                message: "Token is invalid: missing user id",
+            });
+        }
+
+        req.userId = decodedToken.id;
         next();
     } catch (error) {
-        console.log(error);
+        // console.log(error);
+        if (error instanceof TokenExpiredError) {
+            return res.status(401).json({
+                success: false,
+                message: "Token has expired",
+            });
+        }
+        if (error instanceof JsonWebTokenError) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid token",
+            });
+        }
+
         res.status(500).json({
             success: false,
             message: "Internal server error."
