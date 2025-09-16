@@ -14,7 +14,7 @@ const validateUser = (request: IncomingMessage): string | null => {
         const url = new URL(request.url || "/", base);
         token = url.searchParams.get("token");
 
-        console.log(token);
+        // console.log(token);
 
         if (!token) return null;
 

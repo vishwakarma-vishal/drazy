@@ -27,7 +27,7 @@ wss.on("connection", (ws, request) => {
     ws.on("message", (data) => {
         const parsedData = JSON.parse(data.toString());
 
-        console.log("parsed ", parsedData);
+        // console.log("parsed ", parsedData);
 
         if (parsedData.type === "join") {
             joinRoom(ws, userId, parsedData.roomId);
