@@ -41,8 +41,8 @@ model Rectangle {
   chat   Chat   @relation(fields: [id], references: [id])
   startX Int
   startY Int
-  endX   Int
-  endY   Int
+  width  Int
+  height Int
   color  String
 }
 
@@ -68,6 +68,6 @@ model TextShape {
 model Stroke {
   id     String @id @default(uuid())
   chat   Chat   @relation(fields: [id], references: [id])
-  points Json   // e.g. [[0,0],[10,20],[20,25]]
+  points Json // e.g. [[0,0],[10,20],[20,25]]
   color  String
 }
