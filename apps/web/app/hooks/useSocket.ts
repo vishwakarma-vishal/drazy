@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 let socket: WebSocket | null = null;
 
@@ -9,6 +9,7 @@ type wsStatus = "CONNECTING" | "OPEN" | "CLOSING" | "CLOSED" | "UNAUTHORIZED";
 const useSocket = () => {
     const [status, setStatus] = useState<wsStatus>("CONNECTING");
     const [token, setToken] = useState<string | null | undefined>(undefined);
+    const didInit = useRef(false);
 
     const WS_BACKEND = process.env.WS_BACKEND_URL;
     if (!WS_BACKEND) throw new Error("WS_BACKEND must be defined in environment variables");
@@ -21,6 +22,9 @@ const useSocket = () => {
 
     useEffect(() => {
         if (token === undefined) return;
+
+        if (didInit.current) return; 
+        didInit.current = true;
 
         if (!token) {
             setStatus("UNAUTHORIZED");

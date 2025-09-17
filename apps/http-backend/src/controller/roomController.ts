@@ -52,6 +52,12 @@ const getRoomContent = async (req: extendedRequest, res: Response) => {
         }
 
         const roomContent = await client.chat.findMany({
+            select: {
+                rectangle: true,
+                circle: true,
+                text: true,
+                stroke: true
+            },
             where: {
                 roomId: room.id
             }

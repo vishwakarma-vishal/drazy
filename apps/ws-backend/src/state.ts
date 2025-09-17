@@ -78,12 +78,31 @@ const deleteUser = (userId: string) => {
     users.delete(userId);
 }
 
-const brodcastMessage = (ws: WebSocket, roomId: string, message: string) => {
+const brodcastMessage = async (ws: WebSocket, roomId: string, message: any) => {
     const userIds = rooms.get(roomId);
+
+    // store in db
+    if (message.type === "RECTANGLE") {
+        await client.chat.create({
+            data: {
+                roomId,
+                shapeId: "123",
+                rectangle: {
+                    create: {
+                        startX: message.startX,
+                        startY: message.startY,
+                        width: message.width,
+                        height: message.height,
+                        color: message.color,
+                    }
+                }
+            }
+        });
+    }
 
     userIds?.forEach((user) => {
         if (users.get(user)?.ws != ws) {
-            users.get(user)?.ws.send(message);
+            users.get(user)?.ws.send(JSON.stringify(message));
         }
     })
 }
