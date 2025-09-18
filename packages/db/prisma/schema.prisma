@@ -32,6 +32,7 @@ model Chat {
   room      Room       @relation(fields: [roomId], references: [id])
   rectangle Rectangle?
   circle    Circle?
+  line      Line?
   text      TextShape?
   stroke    Stroke?
 }
@@ -52,6 +53,16 @@ model Circle {
   startX Int
   startY Int
   radius Int
+  color  String
+}
+
+model Line {
+  id     String @id @default(uuid())
+  chat   Chat   @relation(fields: [id], references: [id])
+  startX Int
+  startY Int
+  endX   Int
+  endY   Int
   color  String
 }
 

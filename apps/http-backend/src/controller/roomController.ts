@@ -55,6 +55,7 @@ const getRoomContent = async (req: extendedRequest, res: Response) => {
             select: {
                 rectangle: true,
                 circle: true,
+                line: true,
                 text: true,
                 stroke: true
             },

@@ -19,9 +19,13 @@ const getContent = async (roomId: string, canvas: HTMLCanvasElement, ctx: Canvas
                 const prop = item.rectangle;
                 shapes.push({ type: ShapeTypes.RECTANGLE, startX: prop.startX, startY: prop.startY, width: prop.width, height: prop.height, color: prop.color });
             }
-            if (item.circle) {
+            else if (item.circle) {
                 const prop = item.circle;
                 shapes.push({ type: ShapeTypes.CIRCLE, startX: prop.startX, startY: prop.startY, radius: prop.radius, color: prop.color });
+            }
+            else if (item.line) {
+                const prop = item.line;
+                shapes.push({ type: ShapeTypes.LINE, startX: prop.startX, startY: prop.startY, endX: prop.endX, endY: prop.endY, color: prop.color });
             }
         });
         draw(canvas, ctx, selectedColor);
@@ -37,15 +41,22 @@ const draw = (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, selected
 
     shapes.forEach((shape) => {
         // console.log("shape -> ", shape);
+        ctx.strokeStyle = shape.color || selectedColor;
+
         if (shape.type === ShapeTypes.RECTANGLE) {
-            ctx.strokeStyle = shape.color || selectedColor;
             ctx.strokeRect(shape.startX, shape.startY, shape.width, shape.height);
         }
 
         else if (shape.type === ShapeTypes.CIRCLE) {
-            ctx.strokeStyle = shape.color || selectedColor;
             ctx.beginPath();
             ctx.arc(shape.startX, shape.startY, shape.radius, 0, 2 * Math.PI);
+            ctx.stroke();
+        }
+
+        else if (shape.type === ShapeTypes.LINE) {
+            ctx.beginPath();
+            ctx.moveTo(shape.startX, shape.startY);
+            ctx.lineTo(shape.endX, shape.endY);
             ctx.stroke();
         }
     });
@@ -74,20 +85,26 @@ export const initDraw = ({ canvas, socket, roomId, selectedShape, selectedColor 
         const width = e.offsetX - startX;
         const height = e.offsetY - startY;
 
+        draw(canvas, ctx, selectedColor);
+        ctx.strokeStyle = selectedColor;
+
         if (selectedShape === ShapeTypes.RECTANGLE) {
-            draw(canvas, ctx, selectedColor);
-            ctx.strokeStyle = selectedColor;
             ctx.strokeRect(startX, startY, width, height);
         }
 
         else if (selectedShape === ShapeTypes.CIRCLE) {
-            const radius = Math.sqrt(width * width + height * height);
-
-            draw(canvas, ctx, selectedColor);
-            ctx.strokeStyle = selectedColor;
-
+            const centerX = (e.offsetX + startX) / 2
+            const centerY = (e.offsetY + startY) / 2
+            const radius = Math.sqrt(width * width + height * height) / 2;
             ctx.beginPath();
-            ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
+            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+            ctx.stroke();
+        }
+
+        else if (selectedShape === ShapeTypes.LINE) {
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(e.offsetX, e.offsetY);
             ctx.stroke();
         }
     }
@@ -112,11 +129,19 @@ export const initDraw = ({ canvas, socket, roomId, selectedShape, selectedColor 
         }
 
         else if (selectedShape === ShapeTypes.CIRCLE) {
-            const radius = Math.sqrt(width * width + height * height);
+            const centerX = (e.offsetX + startX) / 2
+            const centerY = (e.offsetY + startY) / 2
+            const radius = Math.sqrt(width * width + height * height) / 2;
 
-            shapes.push({ type: ShapeTypes.CIRCLE, startX, startY, radius, color: selectedColor });
+            shapes.push({ type: ShapeTypes.CIRCLE, startX: centerX, startY:centerY, radius, color: selectedColor });
 
-            chatPayload.message = { type: ShapeTypes.CIRCLE, startX, startY, radius, color: selectedColor };
+            chatPayload.message = { type: ShapeTypes.CIRCLE, startX: centerX, startY: centerY, radius, color: selectedColor };
+        }
+
+        else if (selectedShape === ShapeTypes.LINE) {
+            shapes.push({ type: ShapeTypes.LINE, startX, startY, endX: e.offsetX, endY: e.offsetY, color: selectedColor });
+
+            chatPayload.message = { type: ShapeTypes.LINE, startX, startY, endX: e.offsetX, endY: e.offsetY, color: selectedColor };
         }
 
         socket?.send(JSON.stringify(chatPayload));
