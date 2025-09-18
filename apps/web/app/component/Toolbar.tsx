@@ -13,7 +13,7 @@ interface ToolbarProps {
 }
 
 export default function Toolbar({ setSelectedColor, selectedColor, setSelectedShape }: ToolbarProps) {
-  useEffect(() => console.log(selectedColor), [selectedColor]);
+  
   return (
     <div className="absolute left-1/2 -translate-x-1/2 bottom-[20px] 
                     bg-white/10 backdrop-blur-md text-white 

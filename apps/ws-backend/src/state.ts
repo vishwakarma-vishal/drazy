@@ -98,6 +98,21 @@ const brodcastMessage = async (ws: WebSocket, roomId: string, message: any) => {
                 }
             }
         });
+    } else if(message.type === "CIRCLE") {
+        await client.chat.create({
+            data: {
+                roomId,
+                shapeId: "12",
+                circle: {
+                    create: {
+                        startX: message.startX,
+                        startY: message.startY,
+                        radius: message.radius,
+                        color: message.color
+                    }
+                }
+            }
+        })
     }
 
     userIds?.forEach((user) => {

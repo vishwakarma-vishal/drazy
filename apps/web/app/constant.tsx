@@ -10,10 +10,16 @@ export const ShapeTypes = {
 export type ShapeType = typeof ShapeTypes[keyof typeof ShapeTypes];
 
 export type Shape = {
-    type: ShapeType,
+    type: typeof ShapeTypes.RECTANGLE,
     startX: number,
     startY: number,
     width: number,
     height: number,
+    color: string
+} | {
+    type: typeof ShapeTypes.CIRCLE,
+    startX: number,
+    startY: number,
+    radius: number,
     color: string
 }
