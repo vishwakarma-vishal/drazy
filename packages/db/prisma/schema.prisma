@@ -49,8 +49,8 @@ model Rectangle {
 model Circle {
   id     String @id @default(uuid())
   chat   Chat   @relation(fields: [id], references: [id])
-  x      Int
-  y      Int
+  startX Int
+  startY Int
   radius Int
   color  String
 }
