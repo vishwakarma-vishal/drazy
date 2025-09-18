@@ -1,0 +1,53 @@
+"use client";
+
+import { BiRectangle } from "react-icons/bi";
+import { FaRegCircle } from "react-icons/fa";
+import { LuMinus, LuPen } from "react-icons/lu";
+import { Dispatch, SetStateAction, useEffect } from "react";
+import { ShapeTypes } from "../constant";
+
+interface ToolbarProps {
+  setSelectedColor: Dispatch<SetStateAction<string>>;
+  setSelectedShape: Dispatch<SetStateAction<string>>;
+  selectedColor: string;
+}
+
+export default function Toolbar({ setSelectedColor, selectedColor, setSelectedShape }: ToolbarProps) {
+  useEffect(() => console.log(selectedColor), [selectedColor]);
+  return (
+    <div className="absolute left-1/2 -translate-x-1/2 bottom-[20px] 
+                    bg-white/10 backdrop-blur-md text-white 
+                    rounded-full shadow-lg border border-white/20
+                    flex items-center gap-4 px-5 py-2">
+
+      {/* Rectangle */}
+      <button onClick={() => setSelectedShape(ShapeTypes.RECTANGLE)} className="p-2 rounded-full hover:bg-white/20 transition">
+        <BiRectangle className="text-2xl" />
+      </button>
+
+      {/* Circle */}
+      <button onClick={() => setSelectedShape(ShapeTypes.CIRCLE)} className="p-2 rounded-full hover:bg-white/20 transition">
+        <FaRegCircle className="text-2xl" />
+      </button>
+
+      {/* Line */}
+      <button onClick={() => setSelectedShape(ShapeTypes.LINE)} className="p-2 rounded-full hover:bg-white/20 transition">
+        <LuMinus className="text-2xl" />
+      </button>
+
+      {/* Pen */}
+      <button onClick={() => setSelectedShape(ShapeTypes.PEN)} className="p-2 rounded-full hover:bg-white/20 transition">
+        <LuPen className="text-2xl" />
+      </button>
+
+      {/* Color Picker */}
+      <input
+        type="color"
+        value={selectedColor}
+        onChange={(e) => setSelectedColor(e.target.value)}
+        className="inline-block w-8 h-8 rounded-full cursor-pointer border-none
+                   bg-transparent p-0 overflow-hidden outline-none"
+      />
+    </div>
+  );
+}
