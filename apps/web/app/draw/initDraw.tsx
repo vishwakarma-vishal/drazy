@@ -1,5 +1,6 @@
 import axios from "axios";
 import { Shape, ShapeTypes } from "../constant";
+import { GiSharpAxe } from "react-icons/gi";
 
 let shapes: Shape[] = [];
 
@@ -26,6 +27,10 @@ const getContent = async (roomId: string, canvas: HTMLCanvasElement, ctx: Canvas
             else if (item.line) {
                 const prop = item.line;
                 shapes.push({ type: ShapeTypes.LINE, startX: prop.startX, startY: prop.startY, endX: prop.endX, endY: prop.endY, color: prop.color });
+            } 
+            else if (item.stroke) {
+                const prop = item.stroke;
+                shapes.push({type: ShapeTypes.PEN, points: JSON.parse(prop.points), color: prop.color})
             }
         });
         draw(canvas, ctx, selectedColor);
@@ -59,6 +64,18 @@ const draw = (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, selected
             ctx.lineTo(shape.endX, shape.endY);
             ctx.stroke();
         }
+
+        else if (shape.type === ShapeTypes.PEN) {
+            const penPath = shape.points;
+
+            ctx.beginPath();
+            ctx.moveTo(penPath[0].x, penPath[0].y);
+
+            for (let i = 1; i < penPath.length; i++) {
+                ctx.lineTo(penPath[i].x, penPath[i].y);
+            }
+            ctx.stroke();
+        }
     });
 }
 
@@ -73,9 +90,22 @@ export const initDraw = ({ canvas, socket, roomId, selectedShape, selectedColor 
     let startY: number = 0;
     let clicked: boolean = false;
 
+    let drawing: boolean = false;
+
+    let penPath: { x: number, y: number }[] = [];
+
     const handleDown = (e: MouseEvent) => {
         startX = e.offsetX;
         startY = e.offsetY;
+
+        if (selectedShape === ShapeTypes.PEN) {
+            penPath = [];
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            penPath.push({ x: startX, y: startY });
+            drawing = true;
+        }
+
         clicked = true;
     }
 
@@ -85,7 +115,9 @@ export const initDraw = ({ canvas, socket, roomId, selectedShape, selectedColor 
         const width = e.offsetX - startX;
         const height = e.offsetY - startY;
 
-        draw(canvas, ctx, selectedColor);
+        if (selectedShape !== ShapeTypes.PEN) {
+            draw(canvas, ctx, selectedColor);
+        }
         ctx.strokeStyle = selectedColor;
 
         if (selectedShape === ShapeTypes.RECTANGLE) {
@@ -105,6 +137,14 @@ export const initDraw = ({ canvas, socket, roomId, selectedShape, selectedColor 
             ctx.beginPath();
             ctx.moveTo(startX, startY);
             ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.stroke();
+        }
+
+        else if (selectedShape === ShapeTypes.PEN) {
+            if (!drawing) return;
+            penPath.push({ x: e.offsetX, y: e.offsetY });
+            ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.lineCap = "butt";
             ctx.stroke();
         }
     }
@@ -133,7 +173,7 @@ export const initDraw = ({ canvas, socket, roomId, selectedShape, selectedColor 
             const centerY = (e.offsetY + startY) / 2
             const radius = Math.sqrt(width * width + height * height) / 2;
 
-            shapes.push({ type: ShapeTypes.CIRCLE, startX: centerX, startY:centerY, radius, color: selectedColor });
+            shapes.push({ type: ShapeTypes.CIRCLE, startX: centerX, startY: centerY, radius, color: selectedColor });
 
             chatPayload.message = { type: ShapeTypes.CIRCLE, startX: centerX, startY: centerY, radius, color: selectedColor };
         }
@@ -142,6 +182,15 @@ export const initDraw = ({ canvas, socket, roomId, selectedShape, selectedColor 
             shapes.push({ type: ShapeTypes.LINE, startX, startY, endX: e.offsetX, endY: e.offsetY, color: selectedColor });
 
             chatPayload.message = { type: ShapeTypes.LINE, startX, startY, endX: e.offsetX, endY: e.offsetY, color: selectedColor };
+        }
+
+        else if (selectedShape === ShapeTypes.PEN) {
+            if (!drawing) return;
+            penPath.push({ x: e.offsetX, y: e.offsetY });
+            shapes.push({ type: ShapeTypes.PEN, points: penPath, color: selectedColor });
+
+            chatPayload.message = { type: ShapeTypes.PEN, points: penPath, color: selectedColor };
+            drawing = false;
         }
 
         socket?.send(JSON.stringify(chatPayload));

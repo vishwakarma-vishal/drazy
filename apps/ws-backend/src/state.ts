@@ -129,6 +129,19 @@ const brodcastMessage = async (ws: WebSocket, roomId: string, message: any) => {
                 }
             }
         });
+    } else if (message.type === "PEN") {
+        await client.chat.create({
+            data: {
+                roomId,
+                shapeId: "123",
+                stroke: {
+                    create: {
+                        points: JSON.stringify(message.points),
+                        color: message.color
+                    }
+                }
+            }
+        })
     }
 
     userIds?.forEach((user) => {

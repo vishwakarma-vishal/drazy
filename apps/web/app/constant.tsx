@@ -23,10 +23,14 @@ export type Shape = {
     radius: number,
     color: string
 } | {
-    type: typeof ShapeTypes.LINE, 
+    type: typeof ShapeTypes.LINE,
     startX: number,
     startY: number,
     endX: number,
     endY: number,
+    color: string
+} | {
+    type: typeof ShapeTypes.PEN,
+    points: { x: number, y: number }[],
     color: string
 }
