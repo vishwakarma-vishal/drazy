@@ -6,14 +6,14 @@ export const Canvas = ({ socket, roomId }: { socket: WebSocket, roomId: string }
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const drawerRef = useRef<Drawer | null>(null);
 
-    const [selectedShape, setSelectedShape] = useState("RECTANGLE");
+    const [selectedShapeType, setSelectedShapeType] = useState("RECTANGLE");
     const [selectedColor, setSelectedColor] = useState("#ffffff");
 
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        const drawer = new Drawer(canvas, socket, roomId, selectedShape, selectedColor);
+        const drawer = new Drawer(canvas, socket, roomId, selectedShapeType, selectedColor);
         drawerRef.current = drawer;
 
         // cleanup
@@ -26,9 +26,9 @@ export const Canvas = ({ socket, roomId }: { socket: WebSocket, roomId: string }
     useEffect(() => {
         if (drawerRef.current) {
             drawerRef.current.selectedColor = selectedColor;
-            drawerRef.current.selectedShape = selectedShape;
+            drawerRef.current.selectedShapeType = selectedShapeType;
         }
-    }, [selectedColor, selectedShape]);
+    }, [selectedColor, selectedShapeType]);
 
     return (
         <div className="relative">
@@ -40,7 +40,7 @@ export const Canvas = ({ socket, roomId }: { socket: WebSocket, roomId: string }
             >
             </canvas>
 
-            <Toolbar setSelectedColor={setSelectedColor} setSelectedShape={setSelectedShape} selectedColor={selectedColor} />
+            <Toolbar setSelectedColor={setSelectedColor} setSelectedShapeType={setSelectedShapeType} selectedColor={selectedColor} />
         </div>
     )
 }

@@ -8,11 +8,11 @@ import { ShapeTypes } from "../constant";
 
 interface ToolbarProps {
   setSelectedColor: Dispatch<SetStateAction<string>>;
-  setSelectedShape: Dispatch<SetStateAction<string>>;
+  setSelectedShapeType: Dispatch<SetStateAction<string>>;
   selectedColor: string;
 }
 
-export default function Toolbar({ setSelectedColor, selectedColor, setSelectedShape }: ToolbarProps) {
+export default function Toolbar({ setSelectedColor, selectedColor, setSelectedShapeType }: ToolbarProps) {
   
   return (
     <div className="absolute left-1/2 -translate-x-1/2 bottom-[20px] 
@@ -21,22 +21,22 @@ export default function Toolbar({ setSelectedColor, selectedColor, setSelectedSh
                     flex items-center gap-4 px-5 py-2">
 
       {/* Rectangle */}
-      <button onClick={() => setSelectedShape(ShapeTypes.RECTANGLE)} className="p-2 rounded-full hover:bg-white/20 transition">
+      <button onClick={() => setSelectedShapeType(ShapeTypes.RECTANGLE)} className="p-2 rounded-full hover:bg-white/20 transition">
         <BiRectangle className="text-2xl" />
       </button>
 
       {/* Circle */}
-      <button onClick={() => setSelectedShape(ShapeTypes.CIRCLE)} className="p-2 rounded-full hover:bg-white/20 transition">
+      <button onClick={() => setSelectedShapeType(ShapeTypes.CIRCLE)} className="p-2 rounded-full hover:bg-white/20 transition">
         <FaRegCircle className="text-2xl" />
       </button>
 
       {/* Line */}
-      <button onClick={() => setSelectedShape(ShapeTypes.LINE)} className="p-2 rounded-full hover:bg-white/20 transition">
+      <button onClick={() => setSelectedShapeType(ShapeTypes.LINE)} className="p-2 rounded-full hover:bg-white/20 transition">
         <LuMinus className="text-2xl" />
       </button>
 
       {/* Pen */}
-      <button onClick={() => setSelectedShape(ShapeTypes.PEN)} className="p-2 rounded-full hover:bg-white/20 transition">
+      <button onClick={() => setSelectedShapeType(ShapeTypes.PEN)} className="p-2 rounded-full hover:bg-white/20 transition">
         <LuPen className="text-2xl" />
       </button>
 
