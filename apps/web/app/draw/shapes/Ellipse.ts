@@ -28,6 +28,10 @@ export class Ellipse extends BaseShape {
                 ctx.fillRect(h.x - 4, h.y - 4, 8, 8);
                 ctx.strokeRect(h.x - 4, h.y - 4, 8, 8);
             });
+
+            ctx.beginPath();
+            ctx.strokeStyle = "white";
+            ctx.strokeRect(this.startX - this.radiusX, this.startY - this.radiusY, this.radiusX * 2, this.radiusY * 2);
         }
     }
 
