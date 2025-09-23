@@ -16,6 +16,14 @@
     "dev": {
       "cache": false,
       "persistent": true
+    },
+     "migrate": {
+      "dependsOn": [],
+      "outputs": []
+    },
+    "generate": {
+      "dependsOn": [],
+      "outputs": []
     }
   }
 }
