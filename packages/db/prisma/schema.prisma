@@ -31,7 +31,7 @@ model Chat {
 
   room      Room       @relation(fields: [roomId], references: [id])
   rectangle Rectangle?
-  circle    Circle?
+  ellipse   Ellipse?
   line      Line?
   text      TextShape?
   stroke    Stroke?
@@ -47,13 +47,14 @@ model Rectangle {
   color  String
 }
 
-model Circle {
-  id     String @id @default(uuid())
-  chat   Chat   @relation(fields: [id], references: [id])
-  startX Int
-  startY Int
-  radius Int
-  color  String
+model Ellipse {
+  id      String @id @default(uuid())
+  chat    Chat   @relation(fields: [id], references: [id])
+  startX  Int
+  startY  Int
+  radiusX Int
+  radiusY Int
+  color   String
 }
 
 model Line {

@@ -54,7 +54,7 @@ const getRoomContent = async (req: extendedRequest, res: Response) => {
         const roomContent = await client.chat.findMany({
             select: {
                 rectangle: true,
-                circle: true,
+                ellipse: true,
                 line: true,
                 text: true,
                 stroke: true

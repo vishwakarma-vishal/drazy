@@ -3,7 +3,7 @@ import { BaseShape } from "./shapes/BaseShape";
 import { Rectangle } from "./shapes/Rectangle";
 import { Line } from "./shapes/Line";
 import { Pen } from "./shapes/Pen";
-import { Circle } from "./shapes/Circle";
+import { Ellipse } from "./shapes/Ellipse";
 
 export const getContent = async (roomId: string) => {
     try {
@@ -23,9 +23,9 @@ export const getContent = async (roomId: string) => {
                 const prop = item.rectangle;
                 return new Rectangle(prop.startX, prop.startY, prop.width, prop.height, prop.color);
             }
-            else if (item.circle) {
-                const prop = item.circle;
-                return new Circle(prop.startX, prop.startY, prop.radius, prop.color);
+            else if (item.ellipse) {
+                const prop = item.ellipse;
+                return new Ellipse(prop.startX, prop.startY, prop.radiusX, prop.radiusY, prop.color);
             }
             else if (item.line) {
                 const prop = item.line;

@@ -20,7 +20,7 @@ export class Rectangle extends BaseShape {
 
         // draw resize handlers only if selected
         if (this.selected) {
-            this.getAllHandlers().forEach(h => {
+            this.getAllHandle().forEach(h => {
                 ctx.fillStyle = "white";
                 ctx.strokeStyle = "black";
                 ctx.fillRect(h.x - 4, h.y - 4, 8, 8);
@@ -42,7 +42,7 @@ export class Rectangle extends BaseShape {
     }
 
     // get all handles positions
-    getAllHandlers() {
+    getAllHandle() {
         const { startX, startY, width, height } = this;
 
         return [
@@ -59,7 +59,7 @@ export class Rectangle extends BaseShape {
 
     // check if point in on the move handle
     getHandleAt(x: number, y: number): string | null {
-        return this.getAllHandlers().find(h => (Math.abs(x - h.x) <= 5) && (Math.abs(y - h.y) <= 5))?.name || null;
+        return this.getAllHandle().find(h => (Math.abs(x - h.x) <= 5) && (Math.abs(y - h.y) <= 5))?.name || null;
     }
 
     // to resize the shape

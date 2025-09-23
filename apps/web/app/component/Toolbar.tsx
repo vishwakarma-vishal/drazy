@@ -26,7 +26,7 @@ export default function Toolbar({ setSelectedColor, selectedColor, setSelectedSh
       </button>
 
       {/* Circle */}
-      <button onClick={() => setSelectedShapeType(ShapeTypes.CIRCLE)} className="p-2 rounded-full hover:bg-white/20 transition">
+      <button onClick={() => setSelectedShapeType(ShapeTypes.ELLIPSE)} className="p-2 rounded-full hover:bg-white/20 transition">
         <FaRegCircle className="text-2xl" />
       </button>
 

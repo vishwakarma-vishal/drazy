@@ -1,7 +1,7 @@
 import { ShapeTypes } from "../constant";
 import { getContent } from "./http";
 import { BaseShape } from "./shapes/BaseShape";
-import { Circle } from "./shapes/Circle";
+import { Ellipse } from "./shapes/Ellipse";
 import { Line } from "./shapes/Line";
 import { Pen } from "./shapes/Pen";
 import { Rectangle } from "./shapes/Rectangle";
@@ -78,8 +78,8 @@ export class Drawer {
                 case ShapeTypes.RECTANGLE:
                     shape = new Rectangle(payload.startX, payload.startY, payload.width, payload.height, payload.color);
                     break;
-                case ShapeTypes.CIRCLE:
-                    shape = new Circle(payload.startX, payload.startY, payload.radius, payload.color);
+                case ShapeTypes.ELLIPSE:
+                    shape = new Ellipse(payload.startX, payload.startY, payload.radiusX, payload.radiusY, payload.color);
                     break;
                 case ShapeTypes.LINE:
                     shape = new Line(payload.startX, payload.startY, payload.endX, payload.endY, payload.color);
@@ -111,17 +111,21 @@ export class Drawer {
 
         // check if user click on any shape if yes mark it selected
         for (const shape of this.shapes) {
+            // check handle first
+            const handle = shape.getHandleAt(e.offsetX, e.offsetY);
+            if (handle) {
+                shape.setSelected(true);
+                this.selectedShape = shape;
+                this.selectedHandle = handle;
+                this.drawShapes();
+                return;
+            }
+
+            // if not on handle, check shape body
             if (shape.isPointerInside(e.offsetX, e.offsetY)) {
                 shape.setSelected(true);
                 this.selectedShape = shape;
-
-                // check if click was on a handle of this shape
-                const handle = shape.getHandleAt(e.offsetX, e.offsetY);
-                if (handle) {
-                    this.selectedHandle = handle;
-                }
-
-                this.drawShapes(); // redraw to show handles
+                this.drawShapes();
                 return;
             }
         }
@@ -142,8 +146,8 @@ export class Drawer {
         // If shape and handle selected we can resize
         if (this.selectedShape && this.selectedHandle) {
             this.selectedShape.resize(this.selectedHandle, e.offsetX, e.offsetY);
-            this.startX = e.offsetX;
-            this.startY = e.offsetY;
+            // this.startX = e.offsetX;
+            // this.startY = e.offsetY;
             this.drawShapes();
             return;
         }
@@ -172,14 +176,19 @@ export class Drawer {
             this.ctx.strokeRect(this.startX, this.startY, width, height);
         }
 
-        else if (this.selectedShapeType === ShapeTypes.CIRCLE) {
-            const centerX = (e.offsetX + this.startX) / 2
-            const centerY = (e.offsetY + this.startY) / 2
-            const radius = Math.sqrt(width * width + height * height) / 2;
+        else if (this.selectedShapeType === ShapeTypes.ELLIPSE) {
+            const centerX = (e.offsetX + this.startX) / 2;
+            const centerY = (e.offsetY + this.startY) / 2;
+
+            // Half the width/height gives you radii
+            const radiusX = Math.abs(e.offsetX - this.startX) / 2;
+            const radiusY = Math.abs(e.offsetY - this.startY) / 2;
+
             this.ctx.beginPath();
-            this.ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+            this.ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, 2 * Math.PI);
             this.ctx.stroke();
         }
+
 
         else if (this.selectedShapeType === ShapeTypes.LINE) {
             this.ctx.beginPath();
@@ -225,14 +234,15 @@ export class Drawer {
             chatPayload.message = { type: ShapeTypes.RECTANGLE, startX: this.startX, startY: this.startY, width, height, color: this.selectedColor }
         }
 
-        else if (this.selectedShapeType === ShapeTypes.CIRCLE) {
+        else if (this.selectedShapeType === ShapeTypes.ELLIPSE) {
             const centerX = (e.offsetX + this.startX) / 2
             const centerY = (e.offsetY + this.startY) / 2
-            const radius = Math.sqrt(width * width + height * height) / 2;
+            const radiusX = Math.abs(e.offsetX - this.startX) / 2;
+            const radiusY = Math.abs(e.offsetY - this.startY) / 2;
 
-            this.shapes.push(new Circle(centerX, centerY, radius, this.selectedColor));
+            this.shapes.push(new Ellipse(centerX, centerY, radiusX, radiusY, this.selectedColor));
 
-            chatPayload.message = { type: ShapeTypes.CIRCLE, startX: centerX, startY: centerY, radius, color: this.selectedColor };
+            chatPayload.message = { type: ShapeTypes.ELLIPSE, startX: centerX, startY: centerY, radiusX, radiusY, color: this.selectedColor };
         }
 
         else if (this.selectedShapeType === ShapeTypes.LINE) {

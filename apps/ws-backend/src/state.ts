@@ -98,16 +98,17 @@ const brodcastMessage = async (ws: WebSocket, roomId: string, message: any) => {
                 }
             }
         });
-    } else if(message.type === "CIRCLE") {
+    } else if(message.type === "ELLIPSE") {
         await client.chat.create({
             data: {
                 roomId,
                 shapeId: "12",
-                circle: {
+                ellipse: {
                     create: {
                         startX: message.startX,
                         startY: message.startY,
-                        radius: message.radius,
+                        radiusX: message.radiusX,
+                        radiusY: message.radiusY,
                         color: message.color
                     }
                 }
