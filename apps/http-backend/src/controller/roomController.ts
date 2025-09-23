@@ -56,6 +56,7 @@ const getRoomContent = async (req: extendedRequest, res: Response) => {
                 rectangle: true,
                 ellipse: true,
                 line: true,
+                arrow: true,
                 text: true,
                 stroke: true
             },

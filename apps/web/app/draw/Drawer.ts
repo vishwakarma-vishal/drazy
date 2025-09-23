@@ -1,5 +1,6 @@
 import { ShapeTypes } from "../constant";
 import { getContent } from "./http";
+import { Arrow } from "./shapes/Arrow";
 import { BaseShape } from "./shapes/BaseShape";
 import { Ellipse } from "./shapes/Ellipse";
 import { Line } from "./shapes/Line";
@@ -83,6 +84,9 @@ export class Drawer {
                     break;
                 case ShapeTypes.LINE:
                     shape = new Line(payload.startX, payload.startY, payload.endX, payload.endY, payload.color);
+                    break;
+                case ShapeTypes.ARROW:
+                    shape = new Arrow(payload.startX, payload.startY, payload.endX, payload.endY, payload.color);
                     break;
                 case ShapeTypes.PEN:
                     shape = new Pen(payload.points, payload.color);
@@ -189,7 +193,6 @@ export class Drawer {
             this.ctx.stroke();
         }
 
-
         else if (this.selectedShapeType === ShapeTypes.LINE) {
             this.ctx.beginPath();
             this.ctx.moveTo(this.startX, this.startY);
@@ -202,6 +205,34 @@ export class Drawer {
             this.penPath.push({ x: e.offsetX, y: e.offsetY });
             this.ctx.lineTo(e.offsetX, e.offsetY);
             this.ctx.lineCap = "butt";
+            this.ctx.stroke();
+        }
+
+        else if (this.selectedShapeType === ShapeTypes.ARROW) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(this.startX, this.startY);
+            this.ctx.lineTo(e.offsetX, e.offsetY);
+            this.ctx.stroke();
+
+            // drawing the arrow head
+            const angle = Math.atan2(e.offsetY - this.startY, e.offsetX - this.startX);
+            const headLength = 10; // length of arrow left/right line
+            const headAngle = Math.PI / 6; // 30 degree
+
+            //
+            const leftAngle = angle - headAngle;
+            const rightAngle = angle + headAngle;
+            const leftX = e.offsetX - headLength * Math.cos(leftAngle);
+            const leftY = e.offsetY - headLength * Math.sin(leftAngle);
+            const rightX = e.offsetX - headLength * Math.cos(rightAngle);
+            const rightY = e.offsetY - headLength * Math.sin(rightAngle);
+
+            // draw the head
+            this.ctx.beginPath();
+            this.ctx.moveTo(leftX, leftY);
+            this.ctx.lineTo(e.offsetX, e.offsetY);
+            this.ctx.moveTo(rightX, rightY);
+            this.ctx.lineTo(e.offsetX, e.offsetY);
             this.ctx.stroke();
         }
     }
@@ -251,6 +282,12 @@ export class Drawer {
             chatPayload.message = { type: ShapeTypes.LINE, startX: this.startX, startY: this.startY, endX: e.offsetX, endY: e.offsetY, color: this.selectedColor };
         }
 
+        else if (this.selectedShapeType === ShapeTypes.ARROW) {
+            this.shapes.push(new Arrow(this.startX, this.startY, e.offsetX, e.offsetY, this.selectedColor));
+
+            chatPayload.message = { type: ShapeTypes.ARROW, startX: this.startX, startY: this.startY, endX: e.offsetX, endY: e.offsetY, color: this.selectedColor };
+        }
+
         else if (this.selectedShapeType === ShapeTypes.PEN) {
             if (!this.drawing) return;
             this.penPath.push({ x: e.offsetX, y: e.offsetY });
@@ -261,7 +298,7 @@ export class Drawer {
             this.drawing = false;
         }
 
-        this.socket?.send(JSON.stringify(chatPayload));
+        if (Object.keys(chatPayload.message).length > 0) this.socket?.send(JSON.stringify(chatPayload));
         this.drawShapes();
         this.clicked = false;
         this.selectedShape = null;

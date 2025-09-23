@@ -4,6 +4,7 @@ import { Rectangle } from "./shapes/Rectangle";
 import { Line } from "./shapes/Line";
 import { Pen } from "./shapes/Pen";
 import { Ellipse } from "./shapes/Ellipse";
+import { Arrow } from "./shapes/Arrow";
 
 export const getContent = async (roomId: string) => {
     try {
@@ -30,6 +31,10 @@ export const getContent = async (roomId: string) => {
             else if (item.line) {
                 const prop = item.line;
                 return new Line(prop.startX, prop.startY, prop.endX, prop.endY, prop.color);
+            }
+            else if (item.arrow) {
+                const prop = item.arrow;
+                return new Arrow(prop.startX, prop.startY, prop.endX, prop.endY, prop.color);
             }
             // for pen (stroke)
             else if (item.stroke) {

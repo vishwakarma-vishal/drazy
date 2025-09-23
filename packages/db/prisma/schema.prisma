@@ -33,6 +33,7 @@ model Chat {
   rectangle Rectangle?
   ellipse   Ellipse?
   line      Line?
+  arrow     Arrow?
   text      TextShape?
   stroke    Stroke?
 }
@@ -58,6 +59,16 @@ model Ellipse {
 }
 
 model Line {
+  id     String @id @default(uuid())
+  chat   Chat   @relation(fields: [id], references: [id])
+  startX Int
+  startY Int
+  endX   Int
+  endY   Int
+  color  String
+}
+
+model Arrow {
   id     String @id @default(uuid())
   chat   Chat   @relation(fields: [id], references: [id])
   startX Int

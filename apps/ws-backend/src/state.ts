@@ -98,7 +98,7 @@ const brodcastMessage = async (ws: WebSocket, roomId: string, message: any) => {
                 }
             }
         });
-    } else if(message.type === "ELLIPSE") {
+    } else if (message.type === "ELLIPSE") {
         await client.chat.create({
             data: {
                 roomId,
@@ -114,12 +114,28 @@ const brodcastMessage = async (ws: WebSocket, roomId: string, message: any) => {
                 }
             }
         })
-    } else if(message.type === "LINE") {
+    } else if (message.type === "LINE") {
         await client.chat.create({
             data: {
                 roomId,
                 shapeId: "123",
                 line: {
+                    create: {
+                        startX: message.startX,
+                        startY: message.startY,
+                        endX: message.endX,
+                        endY: message.endY,
+                        color: message.color
+                    }
+                }
+            }
+        });
+    } else if (message.type === "ARROW") {
+        await client.chat.create({
+            data: {
+                roomId,
+                shapeId: "123",
+                arrow: {
                     create: {
                         startX: message.startX,
                         startY: message.startY,
