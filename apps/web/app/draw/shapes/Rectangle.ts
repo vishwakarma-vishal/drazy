@@ -18,7 +18,6 @@ export class Rectangle extends BaseShape {
         ctx.strokeStyle = this.color;
         ctx.strokeRect(this.startX, this.startY, this.width, this.height);
 
-        // draw resize handlers only if selected
         if (this.selected) {
             this.getAllHandle().forEach(h => {
                 ctx.fillStyle = "white";
@@ -29,19 +28,16 @@ export class Rectangle extends BaseShape {
         }
     }
 
-    // check if the clicked is inside shape or not
     isPointerInside(x: number, y: number): boolean {
         return (x >= this.startX && x <= this.startX + this.width) &&
             (y >= this.startY && y <= this.startY + this.height);
     }
 
-    // to move the shape
     move(dx: number, dy: number): void {
         this.startX += dx;
         this.startY += dy;
     }
 
-    // get all handles positions
     getAllHandle() {
         const { startX, startY, width, height } = this;
 
@@ -57,12 +53,10 @@ export class Rectangle extends BaseShape {
         ]
     }
 
-    // check if point in on the move handle
     getHandleAt(x: number, y: number): string | null {
         return this.getAllHandle().find(h => (Math.abs(x - h.x) <= 5) && (Math.abs(y - h.y) <= 5))?.name || null;
     }
 
-    // to resize the shape
     resize(handle: string, x: number, y: number): void {
         let fixedX: number, fixedY: number;
 
@@ -83,8 +77,6 @@ export class Rectangle extends BaseShape {
                 fixedX = this.startX;
                 fixedY = this.startY;
                 break;
-
-            // Edge-center handles: fixed edge opposite to moving edge
             case "top-center":
                 fixedX = this.startX;
                 fixedY = this.startY + this.height;
@@ -105,10 +97,30 @@ export class Rectangle extends BaseShape {
                 return;
         }
 
-        // Compute new rectangle boundaries from fixed point and moving mouse
-        this.startX = Math.min(fixedX, x);
-        this.startY = Math.min(fixedY, y);
-        this.width = Math.abs(x - fixedX);
-        this.height = Math.abs(y - fixedY);
+        // creating new rectangle from the updated values
+        switch (handle) {
+            case "top-left":
+            case "top-right":
+            case "bottom-left":
+            case "bottom-right":
+                this.startX = Math.min(fixedX, x);
+                this.startY = Math.min(fixedY, y);
+                this.width = Math.abs(x - fixedX);
+                this.height = Math.abs(y - fixedY);
+                break;
+
+            case "top-center":
+            case "bottom-center":
+                this.startY = Math.min(fixedY, y);
+                this.height = Math.abs(y - fixedY);
+                break;
+
+            case "left-center":
+            case "right-center":
+                this.startX = Math.min(fixedX, x);
+                this.width = Math.abs(x - fixedX);
+                break;
+        }
+
     }
 }
