@@ -81,9 +81,10 @@ model Arrow {
 model TextShape {
   id       String @id @default(uuid())
   chat     Chat   @relation(fields: [id], references: [id])
-  x        Int
-  y        Int
-  content  String
+  startX   Int
+  startY   Int
+  text     String
+  maxWidth Int
   fontSize Int    @default(14)
   color    String
 }
