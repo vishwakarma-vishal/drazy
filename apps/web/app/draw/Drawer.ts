@@ -296,14 +296,12 @@ export class Drawer {
         }
 
         else if (this.selectedShapeType === ShapeTypes.ELLIPSE) {
-            const centerX = (e.offsetX + this.startX) / 2
-            const centerY = (e.offsetY + this.startY) / 2
             const radiusX = Math.abs(e.offsetX - this.startX) / 2;
             const radiusY = Math.abs(e.offsetY - this.startY) / 2;
 
-            this.shapes.push(new Ellipse(centerX, centerY, radiusX, radiusY, this.selectedColor));
+            this.shapes.push(new Ellipse(this.startX, this.startY, radiusX, radiusY, this.selectedColor));
 
-            chatPayload.message = { type: ShapeTypes.ELLIPSE, startX: centerX, startY: centerY, radiusX, radiusY, color: this.selectedColor };
+            chatPayload.message = { type: ShapeTypes.ELLIPSE, startX: this.startX, startY: this.startY, radiusX, radiusY, color: this.selectedColor };
         }
 
         else if (this.selectedShapeType === ShapeTypes.LINE) {
