@@ -159,6 +159,23 @@ const brodcastMessage = async (ws: WebSocket, roomId: string, message: any) => {
                 }
             }
         })
+    } else if (message.type === "TEXT") {
+        await client.chat.create({
+            data: {
+                roomId,
+                shapeId: "123",
+                text: {
+                    create: {
+                        startX: message.startX,
+                        startY: message.startY,
+                        text : message.text,
+                        fontSize: message.fontSize,
+                        maxWidth: message.maxWidth,
+                        color: message.color
+                    }
+                }
+            }
+        });
     }
 
     userIds?.forEach((user) => {

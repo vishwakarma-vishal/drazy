@@ -6,6 +6,7 @@ import { Ellipse } from "./shapes/Ellipse";
 import { Line } from "./shapes/Line";
 import { Pen } from "./shapes/Pen";
 import { Rectangle } from "./shapes/Rectangle";
+import { TextShape } from "./shapes/TextShape";
 
 export class Drawer {
     canvas: HTMLCanvasElement;
@@ -27,6 +28,11 @@ export class Drawer {
     selectedShape: BaseShape | null = null; // represent selected shape to move or resize
     selectedHandle: string | null = null;
 
+    // for text shape
+    dragStartX: number = 0;
+    dragStartY: number = 0;
+    dragEndX: number = 0;
+
 
     constructor(canvas: HTMLCanvasElement, socket: WebSocket, roomId: string, selectedShapeType: string, selectedColor: string) {
         this.canvas = canvas;
@@ -45,6 +51,7 @@ export class Drawer {
         this.handleDown = this.handleDown.bind(this);
         this.handleMove = this.handleMove.bind(this);
         this.handleUp = this.handleUp.bind(this);
+        this.createTextInput = this.createTextInput.bind(this);
 
         this.addEventListeners();
         this.websocketConnection();
@@ -52,7 +59,7 @@ export class Drawer {
 
     // get roomshape form the BE and render then on canvas
     async getCanvasContent() {
-        this.shapes = await getContent(this.roomId);
+        this.shapes = await getContent(this.roomId, this.ctx);
         this.drawShapes();
     }
 
@@ -91,6 +98,9 @@ export class Drawer {
                 case ShapeTypes.PEN:
                     shape = new Pen(payload.points, payload.color);
                     break;
+                case ShapeTypes.TEXT:
+                    shape = new TextShape(payload.startX, payload.startY, payload.text, payload.fontSize, payload.color, payload.maxWidth, this.ctx);
+                    break;
                 default:
                     console.log("Unknown shape received from websocket, shape:", payload);
             }
@@ -112,6 +122,12 @@ export class Drawer {
         this.shapes.forEach(shape => shape.setSelected(false));
         this.selectedShape = null;
         this.selectedHandle = null;
+
+        if (this.selectedShapeType === ShapeTypes.TEXT) {
+            const rect = this.canvas.getBoundingClientRect();
+            this.dragStartX = e.clientX - rect.left;
+            this.dragStartY = e.clientY - rect.top;
+        }
 
         // check if user click on any shape if yes mark it selected
         for (const shape of this.shapes) {
@@ -235,6 +251,20 @@ export class Drawer {
             this.ctx.lineTo(e.offsetX, e.offsetY);
             this.ctx.stroke();
         }
+
+        else if (this.selectedShapeType === ShapeTypes.TEXT) {
+            const rect = this.canvas.getBoundingClientRect();
+            this.dragEndX = e.clientX - rect.left;
+
+            // Redraw canvas to clear old temporary rectangle
+            this.drawShapes();
+
+            // Draw temporary outline rectangle with fixed height
+            const tempWidth = this.dragEndX - this.dragStartX;
+            const tempHeight = 16 * 1.2; // one line height
+            this.ctx.strokeStyle = this.selectedColor;
+            this.ctx.strokeRect(this.dragStartX, this.dragStartY, tempWidth, tempHeight);
+        }
     }
 
     handleUp(e: MouseEvent) {
@@ -298,11 +328,121 @@ export class Drawer {
             this.drawing = false;
         }
 
+        else if (this.selectedShapeType === ShapeTypes.TEXT) {
+            const rect = this.canvas.getBoundingClientRect();
+            this.dragEndX = e.clientX - rect.left;
+
+            // Determine width of the input box
+            const width = Math.max(this.dragEndX - this.dragStartX);
+
+            if (width <= 2) {
+                // Click case
+                this.createTextInput(this.dragStartX, this.dragStartY);
+            } else {
+                // Drag case
+                this.createTextInput(this.dragStartX, this.dragStartY, this.dragEndX);
+            }
+
+            this.dragStartX = 0;
+            this.dragStartY = 0;
+            this.dragEndX = 0;
+        }
+
         if (Object.keys(chatPayload.message).length > 0) this.socket?.send(JSON.stringify(chatPayload));
         this.drawShapes();
         this.clicked = false;
         this.selectedShape = null;
         this.selectedHandle = null;
+    }
+
+    createTextInput(startX: number, startY: number, endX?: number): void {
+        const container = this.canvas.parentElement!;
+        container.style.position = "relative";
+
+        const fontSize = 16;
+        const fontFamily = "Helvetica";
+
+        // Use canvas offset relative to parent container for exact alignment
+        const rect = this.canvas.getBoundingClientRect();
+        const domX = rect.left + startX;
+        const domY = rect.top + startY;
+
+        // Determine width of textarea
+        let maxWidth: number;
+        if (endX !== undefined) {
+            maxWidth = Math.min(endX - startX, this.canvas.width - startX);
+        } else {
+            maxWidth = this.canvas.width - startX;
+        }
+
+        // Create textarea element and styled it
+        const textarea = document.createElement("textarea");
+        textarea.style.position = "absolute";
+        textarea.style.left = `${domX}px`;
+        textarea.style.top = `${domY}px`;
+        textarea.style.width = `${maxWidth}px`;
+        textarea.style.minHeight = `${fontSize * 1.2}px`;
+        textarea.style.fontSize = `${fontSize}px`;
+        textarea.style.fontFamily = fontFamily;
+        textarea.style.color = this.selectedColor || "white";
+        textarea.style.border = "none";
+        textarea.style.outline = "none";
+        textarea.style.padding = "0";
+        textarea.style.margin = "0";
+        textarea.style.background = "transparent";
+        textarea.style.lineHeight = `${fontSize * 1.2}px`;
+        textarea.style.resize = "none";
+        textarea.style.overflow = "hidden";
+        textarea.style.boxSizing = "content-box";
+        textarea.style.zIndex = "1000";
+
+        container.appendChild(textarea);
+
+        // Auto-grow height based on content
+        const updateHeight = () => {
+            textarea.style.height = "auto";
+            textarea.style.height = textarea.scrollHeight + "px";
+        };
+
+        textarea.addEventListener("input", updateHeight);
+        updateHeight();
+
+        // Focus after render
+        requestAnimationFrame(() => textarea.focus());
+
+        // Commit text function
+        const commit = () => {
+            textarea.removeEventListener("blur", commit);
+
+            if (textarea.value !== "") {
+                const textShape =
+                    new TextShape(startX, startY, textarea.value, fontSize, this.selectedColor, maxWidth, this.ctx);
+                textShape.updateHeight(this.ctx);
+                this.shapes.push(textShape);
+
+                const chatPayload = {
+                    type: "chat",
+                    roomId: this.roomId,
+                    message: { type: ShapeTypes.TEXT, startX: startX, startY: startY, text: textarea.value, fontSize: fontSize, maxWidth: maxWidth, color: this.selectedColor }
+                }
+
+                this.socket?.send(JSON.stringify(chatPayload));
+            }
+            textarea.remove();
+
+            this.drawShapes();
+        };
+
+        // Commit on Esc
+        textarea.addEventListener("keydown", (ev) => {
+            if (ev.key === "Escape") {
+                ev.preventDefault();
+                commit();
+            }
+        });
+
+        // Commit on blur
+        textarea.addEventListener("blur", commit);
     }
 
     addEventListeners() {

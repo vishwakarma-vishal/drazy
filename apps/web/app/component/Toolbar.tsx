@@ -6,6 +6,7 @@ import { LuMinus, LuPen } from "react-icons/lu";
 import { GoArrowUpRight } from "react-icons/go";
 import { Dispatch, SetStateAction, useEffect } from "react";
 import { ShapeTypes } from "../constant";
+import { IoText } from "react-icons/io5";
 
 interface ToolbarProps {
   setSelectedColor: Dispatch<SetStateAction<string>>;
@@ -39,6 +40,10 @@ export default function Toolbar({ setSelectedColor, selectedColor, setSelectedSh
 
       <button onClick={() => setSelectedShapeType(ShapeTypes.PEN)} className="p-2 rounded-full hover:bg-white/20 transition">
         <LuPen className="text-2xl" />
+      </button>
+
+      <button onClick={() => setSelectedShapeType(ShapeTypes.TEXT)} className="p-2 rounded-full hover:bg-white/20 transition">
+        <IoText className="text-2xl" />
       </button>
 
       {/* Color Picker */}

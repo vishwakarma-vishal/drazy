@@ -4,5 +4,6 @@ export const ShapeTypes = {
     ELLIPSE: "ELLIPSE",
     LINE: "LINE",
     PEN: "PEN",
-    ARROW: "ARROW"
+    ARROW: "ARROW",
+    TEXT: "TEXT"
 } as const;

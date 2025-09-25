@@ -5,8 +5,9 @@ import { Line } from "./shapes/Line";
 import { Pen } from "./shapes/Pen";
 import { Ellipse } from "./shapes/Ellipse";
 import { Arrow } from "./shapes/Arrow";
+import { TextShape } from "./shapes/TextShape";
 
-export const getContent = async (roomId: string) => {
+export const getContent = async (roomId: string, ctx: CanvasRenderingContext2D) => {
     try {
         const token = localStorage.getItem("token");
         const response = await axios.get(`${process.env.HTTP_BACKEND_URL}/room/${roomId}`, {
@@ -40,7 +41,12 @@ export const getContent = async (roomId: string) => {
             else if (item.stroke) {
                 const prop = item.stroke;
                 return new Pen(JSON.parse(prop.points), prop.color);
-            } else {
+            }
+            else if (item.text) {
+                const prop = item.text;
+                return new TextShape(prop.startX, prop.startY, prop.text, prop.fontSize, prop.color, prop.maxWidth, ctx);
+            }
+            else {
                 console.log("Unknown shape received, skipping -> ", item);
             }
         });
