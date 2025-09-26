@@ -4,7 +4,10 @@ export class Ellipse extends BaseShape {
     startX: number; // starting position of ellipse closing rectangle
     startY: number;
     radiusX: number;
-    radiusY: number
+    radiusY: number;
+    //constraints
+    minWidth: number = 40;
+    minHeight: number = 20;
 
     // follow this centerX -> startX + radiusX, centery -> startY + radiusY
 
@@ -122,22 +125,22 @@ export class Ellipse extends BaseShape {
             case "bottom-right":
                 this.startX = Math.min(fixedX, x);
                 this.startY = Math.min(fixedY, y);
-                width = Math.abs(x - fixedX);
-                height = Math.abs(y - fixedY);
+                width = Math.max(this.minWidth, Math.abs(x - fixedX));
+                height = Math.max(this.minHeight, Math.abs(y - fixedY));
                 this.radiusX = width / 2;
                 this.radiusY = height / 2;
                 break;
 
             case "top-center":
             case "bottom-center":
-                height = Math.abs(y - fixedY);
+                height = Math.max(this.minHeight, Math.abs(y - fixedY));
                 this.radiusY = height / 2;
                 this.startY = Math.min(fixedY, y);
                 break;
 
             case "left-center":
             case "right-center":
-                width = Math.abs(x - fixedX);
+                width = Math.max(this.minWidth, Math.abs(x - fixedX));
                 this.radiusX = width / 2;
                 this.startX = Math.min(fixedX, x);
                 break;

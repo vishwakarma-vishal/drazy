@@ -5,6 +5,9 @@ export class Rectangle extends BaseShape {
     startY: number;
     width: number;
     height: number;
+    //constraints
+    minWidth: number = 40;
+    minHeight: number = 20;
 
     constructor(startX: number, startY: number, width: number, height: number, color: string) {
         super(color);
@@ -58,6 +61,9 @@ export class Rectangle extends BaseShape {
     }
 
     resize(handle: string, x: number, y: number): void {
+        const MIN_WIDTH = this.minWidth;
+        const MIN_HEIGHT = this.minHeight;
+
         let fixedX: number, fixedY: number;
 
         switch (handle) {
@@ -105,20 +111,20 @@ export class Rectangle extends BaseShape {
             case "bottom-right":
                 this.startX = Math.min(fixedX, x);
                 this.startY = Math.min(fixedY, y);
-                this.width = Math.abs(x - fixedX);
-                this.height = Math.abs(y - fixedY);
+                this.width = Math.max(MIN_WIDTH, Math.abs(x - fixedX));
+                this.height = Math.max(MIN_HEIGHT, Math.abs(y - fixedY));
                 break;
 
             case "top-center":
             case "bottom-center":
                 this.startY = Math.min(fixedY, y);
-                this.height = Math.abs(y - fixedY);
+                this.height = Math.max(MIN_HEIGHT, Math.abs(y - fixedY));
                 break;
 
             case "left-center":
             case "right-center":
                 this.startX = Math.min(fixedX, x);
-                this.width = Math.abs(x - fixedX);
+                this.width = Math.max(MIN_WIDTH, Math.abs(x - fixedX));
                 break;
         }
 

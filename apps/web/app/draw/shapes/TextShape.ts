@@ -12,6 +12,10 @@ export class TextShape extends BaseShape {
     initialWidth: number;
     initialHeight: number;
     originalFontSize: number;
+    //constraints
+    padding: number = 20;
+    minWidth: number = 50;
+    minHeight: number = 20;
 
     constructor(startX: number, startY: number, text: string, fontSize: number, color: string, maxWidth: number, ctx: CanvasRenderingContext2D, fontFamily: string = "cursive") {
         super(color);
@@ -165,9 +169,8 @@ export class TextShape extends BaseShape {
     }
 
     resize(handle: string, x: number, y: number): void {
-        const PADDING = 10;
-        const MIN_WIDTH = 40 + 2 * PADDING;
-        const MIN_HEIGHT = 20 + 2 * PADDING;
+        const MIN_WIDTH = this.minWidth + 2 * this.padding;
+        const MIN_HEIGHT = this.minHeight + 2 * this.padding;
         let fixedX: number, fixedY: number;
 
         switch (handle) {

@@ -2,6 +2,9 @@ import { BaseShape } from "./BaseShape";
 
 export class Pen extends BaseShape {
     points: { x: number, y: number }[];
+    //constraints
+    minWidth: number = 40;
+    minHeight: number = 20;
 
     constructor(points: { x: number, y: number }[], color: string) {
         super(color);
@@ -83,6 +86,9 @@ export class Pen extends BaseShape {
     }
 
     resize(handle: string, x: number, y: number): void {
+        const MIN_WIDTH = this.minWidth;
+        const MIN_HEIGHT = this.minHeight;
+
         const { minX, minY, maxX, maxY } = this.getBoundingBox();
 
         let fixedX = minX;
@@ -146,15 +152,23 @@ export class Pen extends BaseShape {
         let scaleX = 1;
         let scaleY = 1;
 
+        const initialWidth: number = Math.abs(startX - fixedX);
+        const initialHeight: number = Math.abs(startY - fixedY);
+
+        const newWidth: number = Math.max(MIN_WIDTH, Math.abs(x - fixedX));
+        const newHeight: number = Math.max(MIN_HEIGHT, Math.abs(y - fixedY));
+
         // scaleX = new width / old width
         if (handle.includes("left") || handle.includes("right")) {
-            scaleX = (x - fixedX) / (startX - fixedX || 1);
+            scaleX = newWidth / (initialWidth || 1);
         }
 
         // scaleY = new height / old height
         if (handle.includes("top") || handle.includes("bottom")) {
-            scaleY = (y - fixedY) / (startY - fixedY || 1);
+            scaleY = newHeight / (initialHeight || 1);
         }
+
+        if (scaleX === 1 && scaleY === 1) return;
 
         // Scale all points relative to anchor
         this.points = this.points.map(p => ({

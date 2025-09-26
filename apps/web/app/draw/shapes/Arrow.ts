@@ -5,6 +5,8 @@ export class Arrow extends BaseShape {
     startY: number;
     endX: number;
     endY: number;
+    // constraints
+    minLength: number = 23;
 
     constructor(startX: number, startY: number, endX: number, endY: number, color: string) {
         super(color);
@@ -93,6 +95,11 @@ export class Arrow extends BaseShape {
     }
 
     resize(handle: string, x: number, y: number): void {
+        const dx = (handle === "start" ? this.endX - x : x - this.startX);
+        const dy = (handle === "start" ? this.endY - y : y - this.startY);
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance < this.minLength) return;
 
         if (handle === "start") {
             this.startX = x;
