@@ -9,6 +9,9 @@ export class TextShape extends BaseShape {
     height: number;
     ctx: CanvasRenderingContext2D;
     fontFamily: string;
+    initialWidth: number;
+    initialHeight: number;
+    originalFontSize: number;
 
     constructor(startX: number, startY: number, text: string, fontSize: number, color: string, maxWidth: number, ctx: CanvasRenderingContext2D, fontFamily: string = "cursive") {
         super(color);
@@ -20,6 +23,9 @@ export class TextShape extends BaseShape {
         this.height = 0;
         this.ctx = ctx;
         this.fontFamily = fontFamily;
+        this.initialWidth = this.maxWidth;
+        this.initialHeight = this.height;
+        this.originalFontSize = this.fontSize;
 
         this.updateHeight(ctx);
     }
@@ -152,69 +158,103 @@ export class TextShape extends BaseShape {
         this.startY = this.startY + dy;
     }
 
+    setInitialStage(): void {
+        this.initialWidth = this.maxWidth;
+        this.initialHeight = this.height;
+        this.originalFontSize = this.fontSize;
+    }
+
     resize(handle: string, x: number, y: number): void {
+        const PADDING = 10;
+        const MIN_WIDTH = 40 + 2 * PADDING;
+        const MIN_HEIGHT = 20 + 2 * PADDING;
         let fixedX: number, fixedY: number;
 
         switch (handle) {
             case "top-left":
-                fixedX = this.startX + this.maxWidth;
-                fixedY = this.startY + this.height;
+                fixedX = this.startX + this.initialWidth;
+                fixedY = this.startY + this.initialHeight;
                 break;
             case "top-right":
                 fixedX = this.startX;
-                fixedY = this.startY + this.height;
+                fixedY = this.startY + this.initialHeight;
                 break;
             case "bottom-left":
-                fixedX = this.startX + this.maxWidth;
+                fixedX = this.startX + this.initialWidth;
                 fixedY = this.startY;
                 break;
             case "bottom-right":
                 fixedX = this.startX;
                 fixedY = this.startY;
                 break;
-
-            // Edge-center handles: fixed edge opposite to moving edge
             case "top-center":
                 fixedX = this.startX;
-                fixedY = this.startY + this.height;
-                break;
-            case "right-center":
-                fixedX = this.startX;
-                fixedY = this.startY;
+                fixedY = this.startY + this.initialHeight;
                 break;
             case "bottom-center":
                 fixedX = this.startX;
                 fixedY = this.startY;
                 break;
             case "left-center":
-                fixedX = this.startX + this.maxWidth;
-                fixedY = this.startY;
+                fixedX = this.startX + this.initialWidth;
+                fixedY = this.startY + this.initialHeight / 2;
                 break;
-            default:
-                return;
+            case "right-center":
+                fixedX = this.startX;
+                fixedY = this.startY + this.initialHeight / 2;
+                break;
+            default: return;
         }
 
-        // Update position and width
-        if (handle !== "bottom-center" && handle !== "top-center") {
-            let originalMaxWidth = this.maxWidth;
-            this.maxWidth = Math.max(10, Math.abs(x - fixedX));
-            this.startX = Math.min(fixedX, x);
+        let prevHeight: number = this.initialHeight || 1;
+        let newHeight: number = Math.max(MIN_HEIGHT, Math.abs(y - fixedY));
+        let scaleH: number = newHeight / prevHeight;
 
-            // Scale font proportionally to width
-            const scaleW = this.maxWidth / originalMaxWidth;
-            this.fontSize = Math.max(1, this.fontSize * scaleW);
-        } else {
-            // Scale font proportionally
-            let originalHeight = this.height;
-            this.height = Math.max(10, Math.abs(y - fixedY));
-            this.startY = Math.min(fixedY, y);
+        switch (handle) {
+            case "top-left":
+                this.startX = Math.min(x, fixedX);
+                this.startY = Math.min(y, fixedY);
+                this.maxWidth = Math.max(MIN_WIDTH, Math.abs(x - fixedX));
+                break;
 
-            // Scale font proportionally to height
-            const scaleH = this.height / originalHeight;
-            this.fontSize = Math.max(1, this.fontSize * scaleH);
+            case "top-center":
+                this.startY = Math.min(y, fixedY);
+                break;
+
+            case "top-right":
+                this.startY = Math.min(y, fixedY);
+                this.maxWidth = Math.max(MIN_WIDTH, Math.abs(x - fixedX));
+                break;
+
+            case "bottom-left":
+                this.startX = Math.min(x, fixedX);
+                this.maxWidth = Math.max(MIN_WIDTH, Math.abs(x - fixedX));
+                break;
+
+            case "bottom-right":
+                this.maxWidth = Math.max(MIN_WIDTH, Math.abs(x - fixedX));
+                break;
+
+            case "bottom-center":
+                // handle by scaleH outside the switch statement
+                break;
+
+            case "left-center":
+                this.startX = Math.min(x, fixedX);
+                this.maxWidth = Math.max(MIN_WIDTH, Math.abs(x - fixedX));
+                break;
+
+            case "right-center":
+                this.maxWidth = Math.max(MIN_WIDTH, Math.abs(x - fixedX));
+                break;
         }
 
-        // Update height dynamically
+        // increase font height with every handle exept left-center, right-center cause height is dynamically calculated
+        if (handle !== "left-center" && handle !== "right-center") {
+            this.fontSize = Math.max(1, this.originalFontSize * scaleH);
+        }
+
+        // recompute height based on font size and text wrapping
         this.updateHeight(this.ctx);
     }
 }

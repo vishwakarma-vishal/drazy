@@ -165,9 +165,10 @@ export class Drawer {
 
         // If shape and handle selected we can resize
         if (this.selectedShape && this.selectedHandle) {
+            if (this.selectedShape instanceof TextShape) {
+                this.selectedShape.setInitialStage();
+            }
             this.selectedShape.resize(this.selectedHandle, e.offsetX, e.offsetY);
-            // this.startX = e.offsetX;
-            // this.startY = e.offsetY;
             this.drawShapes();
             return;
         }
