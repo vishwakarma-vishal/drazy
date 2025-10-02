@@ -40,12 +40,17 @@ export class TextShape extends BaseShape {
         ctx.save();
         ctx.font = `${this.fontSize}px ${this.fontFamily}`;
 
-        const lineHeight = this.fontSize * 1.2;
         const lines: string[] = [];
 
         const paragraphs = this.text.split("\n");
 
         for (const para of paragraphs) {
+            if (para === "") {
+                // intentional blank line
+                lines.push("");
+                continue; // skip wrapping logic
+            }
+
             let line = "";
             const words = para.includes(" ") ? para.split(/\s+/) : [para];
 
@@ -53,7 +58,7 @@ export class TextShape extends BaseShape {
                 let testLine = line === "" ? word : line + " " + word;
                 const testWidth = ctx.measureText(testLine).width;
 
-                if (testWidth > this.maxWidth && line === "") {
+                if (testWidth > this.maxWidth) {
                     // break long word character by character
                     let subLine = "";
                     for (const char of word) {
@@ -77,8 +82,6 @@ export class TextShape extends BaseShape {
             if (line !== "") {
                 lines.push(line);
             }
-
-            lines.push("");
         }
 
         ctx.restore();

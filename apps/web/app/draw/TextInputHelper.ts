@@ -14,12 +14,12 @@ export function createTextInput(
             container.style.position = "relative";
 
             const fontSize = 16;
-            const fontFamily = "Helvetica";
+            const fontFamily = "cursive";
 
             // Use canvas offset relative to parent container for exact alignment
             const rect = canvas.getBoundingClientRect();
             const domX = rect.left + startX;
-            const domY = rect.top + startY;
+            const domY = rect.top + startY - fontSize * 0.2;
 
             // Determine width of textarea
             let maxWidth: number;
@@ -37,6 +37,7 @@ export function createTextInput(
             textarea.style.width = `${maxWidth}px`;
             textarea.style.minHeight = `${fontSize * 1.2}px`;
             textarea.style.fontSize = `${fontSize}px`;
+            textarea.style.fontWeight = "100";
             textarea.style.fontFamily = fontFamily;
             textarea.style.color = color || "white";
             textarea.style.border = "none";
