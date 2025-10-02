@@ -7,7 +7,7 @@ import { Ellipse } from "./shapes/Ellipse";
 import { Arrow } from "./shapes/Arrow";
 import { TextShape } from "./shapes/TextShape";
 
-export const getContent = async (roomId: string, ctx: CanvasRenderingContext2D) => {
+export const fetchShapes = async (roomId: string, ctx: CanvasRenderingContext2D) => {
     try {
         const token = localStorage.getItem("token");
         const response = await axios.get(`${process.env.HTTP_BACKEND_URL}/room/${roomId}`, {

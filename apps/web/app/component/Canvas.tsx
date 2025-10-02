@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { Drawer } from "../draw/Drawer";
+import { CanvasDrawer } from "../draw/CanvasDrawer";
 import Toolbar from "./Toolbar";
 
 export const Canvas = ({ socket, roomId }: { socket: WebSocket, roomId: string }) => {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
-    const drawerRef = useRef<Drawer | null>(null);
+    const drawerRef = useRef<CanvasDrawer | null>(null);
 
     const [selectedShapeType, setSelectedShapeType] = useState("RECTANGLE");
     const [selectedColor, setSelectedColor] = useState("#ffffff");
@@ -13,7 +13,7 @@ export const Canvas = ({ socket, roomId }: { socket: WebSocket, roomId: string }
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        const drawer = new Drawer(canvas, socket, roomId, selectedShapeType, selectedColor);
+        const drawer = new CanvasDrawer(canvas, socket, roomId, selectedShapeType, selectedColor);
         drawerRef.current = drawer;
 
         // cleanup
