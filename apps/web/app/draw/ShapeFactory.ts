@@ -18,7 +18,7 @@ export class ShapeFactory {
 
         switch (payload.type) {
             case ShapeTypes.RECTANGLE:
-                return new Rectangle(payload.startX, payload.startY, payload.width, payload.height, payload.color);
+                return new Rectangle(payload.id, payload.tempId, payload.status, payload.startX, payload.startY, payload.width, payload.height, payload.color);
             case ShapeTypes.ELLIPSE:
                 return new Ellipse(payload.startX, payload.startY, payload.radiusX, payload.radiusY, payload.color);
             case ShapeTypes.LINE:

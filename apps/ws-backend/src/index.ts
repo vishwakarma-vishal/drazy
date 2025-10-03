@@ -1,7 +1,7 @@
 import { WebSocketServer } from "ws";
 import dotenv from "dotenv";
 dotenv.config({ path: "../../.env" });
-import { addUser, brodcastMessage, deleteUser, joinRoom, leaveRoom } from "./state";
+import { addUser, brodcastMessage, deleteUser, joinRoom, leaveRoom, saveInDBAndConfirm, updateInDB } from "./state";
 import { validateUser } from "./utils";
 
 const WS_PORT = process.env.WS_PORT;
@@ -33,8 +33,17 @@ wss.on("connection", (ws, request) => {
             joinRoom(ws, userId, parsedData.roomId);
         }
 
-        if (parsedData.type === "chat") {
-            brodcastMessage(ws, parsedData.roomId, parsedData.message)
+        if (parsedData.type === "shape") {
+
+            if (parsedData.action === "create") {
+                brodcastMessage(ws, parsedData.roomId, parsedData);
+                saveInDBAndConfirm(ws, parsedData.roomId, parsedData.shape);
+            }
+
+            if (parsedData.action === "update") {
+                brodcastMessage(ws, parsedData.roomId, parsedData);
+                updateInDB(parsedData.id, parsedData.updates);
+            }
         }
 
         if (parsedData.type === "leave") {

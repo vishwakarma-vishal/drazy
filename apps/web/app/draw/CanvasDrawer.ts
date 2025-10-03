@@ -4,6 +4,8 @@ import { ShapeFactory } from "./ShapeFactory";
 import { BaseShape } from "./shapes/BaseShape";
 import { TextShape } from "./shapes/TextShape";
 import { createTextInput } from "./TextInputHelper";
+import { confirmStatusAndUpdateId, generateTempId, updateShapeWithId } from "./Helper";
+import { Rectangle } from "./shapes/Rectangle";
 
 export class CanvasDrawer {
     canvas: HTMLCanvasElement;
@@ -67,6 +69,7 @@ export class CanvasDrawer {
     // get roomshape form the BE and render then on canvas
     private async getCanvasContent() {
         this.shapes = await fetchShapes(this.roomId, this.ctx);
+        // console.log("intial shapes -> ", this.shapes);
         this.drawShapes();
     }
 
@@ -76,25 +79,47 @@ export class CanvasDrawer {
             const payload = JSON.parse(message.data);
             console.log("payload -> ", payload);
 
-            let shape: BaseShape | null = this.shapeFactory.createShapeFromPayload(payload);
+            // create status-pending
+            if (payload.type === "shape" && payload.action === "create") {
+                let shape: BaseShape | null = this.shapeFactory.createShapeFromPayload(payload.shape);
+                console.log("receiver: before shape snapshot ->", JSON.parse(JSON.stringify(shape)));
 
-            if (shape) {
-                this.shapes.push(shape);
-                this.drawShapes();
+                if (shape) {
+                    this.shapes.push(shape);
+                }
             }
+
+            // db confirm status-confim
+            if (payload.type === "shape" && payload.action === "confirm") {
+                confirmStatusAndUpdateId(this.shapes, payload);
+            }
+
+            // update 
+            if (payload.type === "shape" && payload.action === "update") {
+                updateShapeWithId(this.shapes, payload);
+            }
+
+            this.drawShapes();
         }
     }
 
     // helper- create shape payload add it into the shapes and send it via websocket
-    private finalizeShape(message: any) {
-        const shape = this.shapeFactory.createShapeFromPayload(message);
-        if (shape instanceof TextShape) shape.updateHeight(this.ctx);
+    private finalizeShape(payload: any) {
+        if (payload.action === "create") {
+            const shape = this.shapeFactory.createShapeFromPayload(payload.shape);
+            if (shape instanceof TextShape) shape.updateHeight(this.ctx);
 
-        if (shape) {
-            this.shapes.push(shape);
-            this.socket?.send(JSON.stringify({ type: "chat", roomId: this.roomId, message }));
+            if (shape) {
+                console.log("sender:before shape snapshot ->", JSON.parse(JSON.stringify(shape)));
+                this.shapes.push(shape);
+                this.socket?.send(JSON.stringify(payload));
+            }
+            this.drawShapes();
         }
-        this.drawShapes();
+
+        if (payload.action === "update") {
+            this.socket?.send(JSON.stringify(payload));
+        }
     }
 
     handleDown = (e: MouseEvent) => {
@@ -221,9 +246,37 @@ export class CanvasDrawer {
 
     handleUp = (e: MouseEvent) => {
         if (!this.clicked) return;
+        const payload = {
+            type: "shape",
+            roomId: this.roomId,
+            action: "create",
+            shape: {}
+        }
+
+        const shapeTempId = generateTempId();
+        if (!shapeTempId) {
+            // add logout functinality here
+            console.log("user is not logged in, logging out...");
+        }
 
         // If we were resizing or moving, just finish the action
         if (this.selectedShape) {
+            // finilize the update sync with backend
+            if (this.selectedShape instanceof Rectangle) {
+                const payload = {
+                    type: "shape",
+                    roomId: this.roomId,
+                    action: "update",
+                    id: this.selectedShape.id,
+                    tempId: this.selectedShape.tempId,
+                    updates: {}
+                }
+
+                payload.updates = { type: this.selectedShapeType, startX: this.selectedShape.startX, startY: this.selectedShape.startY, width: this.selectedShape.width, height: this.selectedShape.height, color: this.selectedShape.getColor() }
+
+                this.finalizeShape(payload);
+            }
+
             this.selectedHandle = null;
             this.selectedShape = null; // optional: keep selection if you want
             this.clicked = false;
@@ -234,34 +287,32 @@ export class CanvasDrawer {
         const width = e.offsetX - this.startX;
         const height = e.offsetY - this.startY;
 
-        let message = {};
-
         if (this.selectedShapeType === ShapeTypes.RECTANGLE) {
-            message = { type: ShapeTypes.RECTANGLE, startX: this.startX, startY: this.startY, width, height, color: this.selectedColor }
+            payload.shape = { type: ShapeTypes.RECTANGLE, id: "", tempId: shapeTempId, status: "pending", startX: this.startX, startY: this.startY, width, height, color: this.selectedColor }
         }
 
         else if (this.selectedShapeType === ShapeTypes.ELLIPSE) {
             const radiusX = Math.abs(e.offsetX - this.startX) / 2;
             const radiusY = Math.abs(e.offsetY - this.startY) / 2;
 
-            message = { type: ShapeTypes.ELLIPSE, startX: this.startX, startY: this.startY, radiusX, radiusY, color: this.selectedColor };
+            payload.shape = { type: ShapeTypes.ELLIPSE, startX: this.startX, startY: this.startY, radiusX, radiusY, color: this.selectedColor };
         }
 
         else if (this.selectedShapeType === ShapeTypes.LINE) {
 
-            message = { type: ShapeTypes.LINE, startX: this.startX, startY: this.startY, endX: e.offsetX, endY: e.offsetY, color: this.selectedColor };
+            payload.shape = { type: ShapeTypes.LINE, startX: this.startX, startY: this.startY, endX: e.offsetX, endY: e.offsetY, color: this.selectedColor };
         }
 
         else if (this.selectedShapeType === ShapeTypes.ARROW) {
 
-            message = { type: ShapeTypes.ARROW, startX: this.startX, startY: this.startY, endX: e.offsetX, endY: e.offsetY, color: this.selectedColor };
+            payload.shape = { type: ShapeTypes.ARROW, startX: this.startX, startY: this.startY, endX: e.offsetX, endY: e.offsetY, color: this.selectedColor };
         }
 
         else if (this.selectedShapeType === ShapeTypes.PEN) {
             if (!this.drawing) return;
             this.penPath.push({ x: e.offsetX, y: e.offsetY });
 
-            message = { type: ShapeTypes.PEN, points: this.penPath, color: this.selectedColor };
+            payload.shape = { type: ShapeTypes.PEN, points: this.penPath, color: this.selectedColor };
             this.drawing = false;
         }
 
@@ -284,9 +335,9 @@ export class CanvasDrawer {
             promise.then((shapeProp) => {
                 if (!shapeProp) return;
 
-                message = { type: ShapeTypes.TEXT, startX: shapeProp.startX, startY: shapeProp.startY, text: shapeProp.value, fontSize: shapeProp.fontSize, maxWidth: shapeProp.maxWidth, color: shapeProp.color }
+                payload.shape = { type: ShapeTypes.TEXT, startX: shapeProp.startX, startY: shapeProp.startY, text: shapeProp.value, fontSize: shapeProp.fontSize, maxWidth: shapeProp.maxWidth, color: shapeProp.color }
 
-                this.finalizeShape(message);
+                this.finalizeShape(payload);
 
                 this.dragStartX = 0;
                 this.dragStartY = 0;
@@ -294,8 +345,8 @@ export class CanvasDrawer {
             });
         }
 
-        if (Object.keys(message).length > 0) {
-            this.finalizeShape(message);
+        if (Object.keys(payload.shape).length > 0) {
+            this.finalizeShape(payload);
         }
 
         this.clicked = false;

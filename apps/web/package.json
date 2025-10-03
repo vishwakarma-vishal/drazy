@@ -3,15 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-     "i" : "pnpm i",
+    "i": "pnpm i",
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start"
   },
   "dependencies": {
     "@repo/db": "workspace:*",
+    "@types/jsonwebtoken": "^9.0.10",
     "axios": "^1.12.2",
     "dotenv": "^17.2.2",
+    "jsonwebtoken": "^9.0.2",
     "next": "15.5.3",
     "postcss": "^8.5.6",
     "react": "19.1.0",

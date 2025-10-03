@@ -78,111 +78,162 @@ const deleteUser = (userId: string) => {
     users.delete(userId);
 }
 
-const brodcastMessage = async (ws: WebSocket, roomId: string, message: any) => {
+const brodcastMessage = async (ws: WebSocket, roomId: string, payload: any) => {
     const userIds = rooms.get(roomId);
 
+    userIds?.forEach((user) => {
+        if (users.get(user)?.ws != ws) {
+            users.get(user)?.ws.send(JSON.stringify(payload));
+        }
+    })
+}
+
+const saveInDBAndConfirm = async (ws: WebSocket, roomId: string, shape: any) => {
     // store in db
-    if (message.type === "RECTANGLE") {
-        await client.chat.create({
+    let response;
+
+    if (shape.type === "RECTANGLE") {
+        response = await client.chat.create({
             data: {
                 roomId,
-                shapeId: "123",
+                shapeId: "rectangle", // discriminator
                 rectangle: {
                     create: {
-                        startX: message.startX,
-                        startY: message.startY,
-                        width: message.width,
-                        height: message.height,
-                        color: message.color,
+                        tempId: shape.tempId,
+                        startX: shape.startX,
+                        startY: shape.startY,
+                        width: shape.width,
+                        height: shape.height,
+                        color: shape.color,
                     }
                 }
+            },
+            include: {
+                rectangle: true,
             }
         });
-    } else if (message.type === "ELLIPSE") {
-        await client.chat.create({
+    } else if (shape.type === "ELLIPSE") {
+        response = await client.chat.create({
             data: {
                 roomId,
                 shapeId: "12",
                 ellipse: {
                     create: {
-                        startX: message.startX,
-                        startY: message.startY,
-                        radiusX: message.radiusX,
-                        radiusY: message.radiusY,
-                        color: message.color
+                        startX: shape.startX,
+                        startY: shape.startY,
+                        radiusX: shape.radiusX,
+                        radiusY: shape.radiusY,
+                        color: shape.color
                     }
                 }
             }
         })
-    } else if (message.type === "LINE") {
-        await client.chat.create({
+    } else if (shape.type === "LINE") {
+        response = await client.chat.create({
             data: {
                 roomId,
                 shapeId: "123",
                 line: {
                     create: {
-                        startX: message.startX,
-                        startY: message.startY,
-                        endX: message.endX,
-                        endY: message.endY,
-                        color: message.color
+                        startX: shape.startX,
+                        startY: shape.startY,
+                        endX: shape.endX,
+                        endY: shape.endY,
+                        color: shape.color
                     }
                 }
             }
         });
-    } else if (message.type === "ARROW") {
-        await client.chat.create({
+    } else if (shape.type === "ARROW") {
+        response = await client.chat.create({
             data: {
                 roomId,
                 shapeId: "123",
                 arrow: {
                     create: {
-                        startX: message.startX,
-                        startY: message.startY,
-                        endX: message.endX,
-                        endY: message.endY,
-                        color: message.color
+                        startX: shape.startX,
+                        startY: shape.startY,
+                        endX: shape.endX,
+                        endY: shape.endY,
+                        color: shape.color
                     }
                 }
             }
         });
-    } else if (message.type === "PEN") {
-        await client.chat.create({
+    } else if (shape.type === "PEN") {
+        response = await client.chat.create({
             data: {
                 roomId,
                 shapeId: "123",
                 stroke: {
                     create: {
-                        points: JSON.stringify(message.points),
-                        color: message.color
+                        points: JSON.stringify(shape.points),
+                        color: shape.color
                     }
                 }
             }
         })
-    } else if (message.type === "TEXT") {
-        await client.chat.create({
+    } else if (shape.type === "TEXT") {
+        response = await client.chat.create({
             data: {
                 roomId,
                 shapeId: "123",
                 text: {
                     create: {
-                        startX: message.startX,
-                        startY: message.startY,
-                        text : message.text,
-                        fontSize: message.fontSize,
-                        maxWidth: message.maxWidth,
-                        color: message.color
+                        startX: shape.startX,
+                        startY: shape.startY,
+                        text: shape.text,
+                        fontSize: shape.fontSize,
+                        maxWidth: shape.maxWidth,
+                        color: shape.color
                     }
                 }
             }
         });
     }
 
+    if (!response) return;
+
+    // send confirmation
+    const userIds = rooms.get(roomId);
+
+    console.log("response ->", response);
+
+    const shapeId = response.id;
+
+    const payload = {
+        type: "shape",
+        action: "confirm",
+        tempId: shape.tempId,
+        id: shapeId,
+    }
+
     userIds?.forEach((user) => {
-        if (users.get(user)?.ws != ws) {
-            users.get(user)?.ws.send(JSON.stringify(message));
+        if (users.get(user)?.ws) {
+            users.get(user)?.ws.send(JSON.stringify(payload));
         }
     })
+}
+
+const updateInDB = async (id: string, updates: any) => {
+    console.log("id, updates", id, updates);
+    if (updates.type === "RECTANGLE") {
+        await client.rectangle.update({
+            where: {
+                id: String(id),
+            },
+            data:
+            {
+                tempId: updates.tempId,
+                startX: updates.startX,
+                startY: updates.startY,
+                width: updates.width,
+                height: updates.height,
+                color: updates.color,
+
+            }
+        });
+    }
 }
 
 // helper functions (use to debug)
@@ -196,4 +247,4 @@ const printRoom = () => {
     rooms.forEach((room) => console.log(room));
 }
 
-export { addUser, joinRoom, leaveRoom, deleteUser, brodcastMessage };
+export { addUser, joinRoom, leaveRoom, deleteUser, brodcastMessage, saveInDBAndConfirm, updateInDB };

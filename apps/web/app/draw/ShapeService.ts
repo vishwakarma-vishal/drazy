@@ -23,7 +23,7 @@ export const fetchShapes = async (roomId: string, ctx: CanvasRenderingContext2D)
         shapes = data.map((item: any) => {
             if (item.rectangle) {
                 const prop = item.rectangle;
-                return new Rectangle(prop.startX, prop.startY, prop.width, prop.height, prop.color);
+                return new Rectangle(prop.id, prop.tempId, "confirmed", prop.startX, prop.startY, prop.width, prop.height, prop.color);
             }
             else if (item.ellipse) {
                 const prop = item.ellipse;

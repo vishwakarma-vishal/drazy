@@ -1,6 +1,11 @@
 import { BaseShape } from "./BaseShape"
 
 export class Rectangle extends BaseShape {
+    // for real time communication/consitency
+    id: string;
+    tempId: string;
+    status: string; // pending, confirmed, deleted
+    // properties
     startX: number;
     startY: number;
     width: number;
@@ -9,8 +14,11 @@ export class Rectangle extends BaseShape {
     minWidth: number = 40;
     minHeight: number = 20;
 
-    constructor(startX: number, startY: number, width: number, height: number, color: string) {
+    constructor(id:string = "", tempId: string, status: string, startX: number, startY: number, width: number, height: number, color: string) {
         super(color);
+        this.id = id;
+        this.tempId = tempId;
+        this.status = status;
         this.startX = startX;
         this.startY = startY;
         this.width = width;
