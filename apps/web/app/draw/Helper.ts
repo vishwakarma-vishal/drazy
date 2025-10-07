@@ -48,7 +48,7 @@ export function confirmStatusAndUpdateId(shapes: BaseShape[], payload: any): boo
 
         shape.status = "confirmed";
         shape.id = id;
-        console.log("After confirmation shape snapshot ->", JSON.parse(JSON.stringify(shape)));
+        // console.log("After confirmation shape snapshot ->", JSON.parse(JSON.stringify(shape)));
 
         return true;
     } catch (error) {
@@ -60,26 +60,25 @@ export function confirmStatusAndUpdateId(shapes: BaseShape[], payload: any): boo
 export function updateShapeWithId(shapes: BaseShape[], payload: any) {
     const {id, tempId} = payload;
     const { startX, startY, width, height, color } = payload.updates;
-    console.log("tempid", tempId);
 
-    // get the shape form the id
-    console.log("shapes ->", shapes);
+    // check id first then the tempId
     const found: Rectangle | undefined = shapes.find(
-        s => (s instanceof Rectangle) && String(s.tempId) === String(tempId)
+        s => (s instanceof Rectangle) && (String(s.id) === String(id) || (tempId && String(s.tempId) === String(tempId))) 
     ) as Rectangle | undefined;
 
-    console.log("shape", found);
     const shape = found ?? null;
 
     if (!shape) return;
 
-    shape.id = id;
+    if (!shape.id && id) {
+        shape.id = id;
+    }
+
     // shape.status = status;
     shape.startX = startX;
     shape.startY = startY;
     shape.width = width;
     shape.height = height;
     shape.setColor(color);
-    console.log("shape updated, new shape -> ", shape);
 }
 

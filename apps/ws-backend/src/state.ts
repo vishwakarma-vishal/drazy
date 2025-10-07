@@ -13,6 +13,11 @@ const users = new Map<string, UserI>();
 // roomId → Set<userId>
 const rooms = new Map<string, Set<string>>();
 
+// for real time broadcasting with persistance DB
+// tempId → { id?: string, ops: any[] }
+export const pendingShapeOps = new Map<string, { id?: string, ops: any[] }>();
+
+
 const addUser = (userId: string, ws: WebSocket) => {
     users.set(userId, {
         userId,
@@ -99,7 +104,6 @@ const saveInDBAndConfirm = async (ws: WebSocket, roomId: string, shape: any) => 
                 shapeId: "rectangle", // discriminator
                 rectangle: {
                     create: {
-                        tempId: shape.tempId,
                         startX: shape.startX,
                         startY: shape.startY,
                         width: shape.width,
@@ -208,11 +212,26 @@ const saveInDBAndConfirm = async (ws: WebSocket, roomId: string, shape: any) => 
         id: shapeId,
     }
 
+    // replay the cached events
+    const pendingEntry = pendingShapeOps.get(shape.tempId);
+
+    if (pendingEntry) {
+        pendingEntry.id = shapeId;
+
+        // replay any chached updates to DB
+        pendingEntry.ops.forEach(op => {
+            updateInDB(shapeId, op.updates);
+        });
+
+        // clear pending ops
+        pendingShapeOps.delete(shape.tempId);
+    }
+
     userIds?.forEach((user) => {
         if (users.get(user)?.ws) {
             users.get(user)?.ws.send(JSON.stringify(payload));
         }
-    })
+    });
 }
 
 const updateInDB = async (id: string, updates: any) => {
@@ -224,7 +243,6 @@ const updateInDB = async (id: string, updates: any) => {
             },
             data:
             {
-                tempId: updates.tempId,
                 startX: updates.startX,
                 startY: updates.startY,
                 width: updates.width,

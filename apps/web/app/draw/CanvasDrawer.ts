@@ -77,25 +77,27 @@ export class CanvasDrawer {
     private websocketConnection() {
         this.socket.onmessage = (message) => {
             const payload = JSON.parse(message.data);
-            console.log("payload -> ", payload);
+            // console.log("payload -> ", payload);
+
+            const { type, action, shape } = payload;
 
             // create status-pending
-            if (payload.type === "shape" && payload.action === "create") {
-                let shape: BaseShape | null = this.shapeFactory.createShapeFromPayload(payload.shape);
-                console.log("receiver: before shape snapshot ->", JSON.parse(JSON.stringify(shape)));
+            if (type === "shape" && action === "create") {
+                let newShape: BaseShape | null = this.shapeFactory.createShapeFromPayload(shape);
+                // console.log("receiver: before shape snapshot ->", JSON.parse(JSON.stringify(newShape)));
 
-                if (shape) {
-                    this.shapes.push(shape);
+                if (newShape) {
+                    this.shapes.push(newShape);
                 }
             }
 
             // db confirm status-confim
-            if (payload.type === "shape" && payload.action === "confirm") {
+            if (type === "shape" && action === "confirm") {
                 confirmStatusAndUpdateId(this.shapes, payload);
             }
 
             // update 
-            if (payload.type === "shape" && payload.action === "update") {
+            if (type === "shape" && action === "update") {
                 updateShapeWithId(this.shapes, payload);
             }
 
@@ -105,19 +107,26 @@ export class CanvasDrawer {
 
     // helper- create shape payload add it into the shapes and send it via websocket
     private finalizeShape(payload: any) {
-        if (payload.action === "create") {
-            const shape = this.shapeFactory.createShapeFromPayload(payload.shape);
-            if (shape instanceof TextShape) shape.updateHeight(this.ctx);
+        const { action, shape } = payload;
 
-            if (shape) {
-                console.log("sender:before shape snapshot ->", JSON.parse(JSON.stringify(shape)));
-                this.shapes.push(shape);
+        if (action === "create") {
+            // create shape object
+            const newShape = this.shapeFactory.createShapeFromPayload(shape);
+            if (newShape instanceof TextShape) newShape.updateHeight(this.ctx);
+
+            if (newShape) {
+                // console.log("sender:before shape snapshot ->", JSON.parse(JSON.stringify(newShape)));
+                // apply locally
+                this.shapes.push(newShape);
+                this.drawShapes();
+
+                // send updates immediately
                 this.socket?.send(JSON.stringify(payload));
             }
-            this.drawShapes();
         }
 
-        if (payload.action === "update") {
+        if (action === "update") {
+            // send updates immediately
             this.socket?.send(JSON.stringify(payload));
         }
     }

@@ -1,7 +1,7 @@
 import { WebSocketServer } from "ws";
 import dotenv from "dotenv";
 dotenv.config({ path: "../../.env" });
-import { addUser, brodcastMessage, deleteUser, joinRoom, leaveRoom, saveInDBAndConfirm, updateInDB } from "./state";
+import { addUser, brodcastMessage, deleteUser, joinRoom, leaveRoom, pendingShapeOps, saveInDBAndConfirm, updateInDB } from "./state";
 import { validateUser } from "./utils";
 
 const WS_PORT = process.env.WS_PORT;
@@ -36,13 +36,33 @@ wss.on("connection", (ws, request) => {
         if (parsedData.type === "shape") {
 
             if (parsedData.action === "create") {
+                // brodcast immediately
                 brodcastMessage(ws, parsedData.roomId, parsedData);
+
+                // initialize pending ops for this tempId
+                pendingShapeOps.set(parsedData.shape.tempId, { ops: [] });
+
+                // async DB save
                 saveInDBAndConfirm(ws, parsedData.roomId, parsedData.shape);
             }
 
             if (parsedData.action === "update") {
+                // broadcast immediately
                 brodcastMessage(ws, parsedData.roomId, parsedData);
-                updateInDB(parsedData.id, parsedData.updates);
+
+                const shapeId = parsedData.id;
+                const tempId = parsedData.tempId;
+
+                if (shapeId) {
+                    // shape is confirmed, we can update DB directly
+                    updateInDB(shapeId, parsedData.updates);
+                } else if (tempId && pendingShapeOps.has(tempId)) {
+                    // shape not confirmed, push into the pending ops
+                    const entry = pendingShapeOps.get(tempId);
+                    entry?.ops.push(parsedData);
+                } else {
+                    console.log("Update received from Unknown tempId", tempId);
+                }
             }
         }
 
