@@ -40,7 +40,6 @@ model Chat {
 
 model Rectangle {
   id     String @id @default(uuid())
-  tempId String
   chat   Chat   @relation(fields: [id], references: [id])
   startX Int
   startY Int
