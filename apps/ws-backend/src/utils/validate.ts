@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import { IncomingMessage } from "http";
 
 interface MyJwtToken extends JwtPayload {
-        id: string;
+    id: string;
 }
 
 const validateUser = (request: IncomingMessage): string | null => {
@@ -16,7 +16,10 @@ const validateUser = (request: IncomingMessage): string | null => {
 
         // console.log(token);
 
-        if (!token) return null;
+        if (!token) {
+            console.log("Token missing in request");
+            return null;
+        }
 
         const JWT_SECRET = process.env.JWT_SECRET;
 
