@@ -1,4 +1,5 @@
 import { client } from "@repo/db";
+import { batchManager } from "./batchManager";
 
 const checkRoomStatus = async (roomId: string): Promise<boolean> => {
     try {
@@ -140,29 +141,5 @@ const storeInDB = async (roomId: string, shape: any) => {
     return response;
 }
 
-const updateInDB = async (id: string, updates: any) => {
-    console.log("id, updates", id, updates);
-
-    try {
-        if (updates.type === "RECTANGLE") {
-            await client.rectangle.update({
-                where: {
-                    id: String(id),
-                },
-                data:
-                {
-                    startX: updates.startX,
-                    startY: updates.startY,
-                    width: updates.width,
-                    height: updates.height,
-                    color: updates.color,
-                }
-            });
-        }
-    } catch (error) {
-        console.log("Error while updating shape in the DB, error:", error);
-    }
-}
-
-export { checkRoomStatus, storeInDB, updateInDB };
+export { checkRoomStatus, storeInDB };
 

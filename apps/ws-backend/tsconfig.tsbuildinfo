@@ -1,1 +1,1 @@
-{"root":["./src/index.ts","./src/services/appservice.ts","./src/services/dbservice.ts","./src/services/wsservice.ts","./src/state/manage.ts","./src/state/state.ts","./src/utils/logger.ts","./src/utils/validate.ts"],"version":"5.9.2"}
+{"root":["./src/index.ts","./src/services/appservice.ts","./src/services/batchmanager.ts","./src/services/dbservice.ts","./src/services/wsservice.ts","./src/state/manage.ts","./src/state/state.ts","./src/utils/logger.ts","./src/utils/validate.ts"],"version":"5.9.2"}

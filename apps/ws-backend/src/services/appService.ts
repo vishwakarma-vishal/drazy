@@ -1,7 +1,8 @@
 import { WebSocket } from "ws";
 import { state } from "../state/state";
-import { storeInDB, updateInDB } from "./dbService";
+import { storeInDB } from "./dbService";
 import { broadcastMessage } from "./wsService";
+import { batchManager } from "./batchManager";
 
 const handleShape = (ws: WebSocket, parsedData: any) => {
     const { action, roomId } = parsedData;
@@ -26,7 +27,12 @@ const handleShape = (ws: WebSocket, parsedData: any) => {
 
         if (shapeId) {
             // shape is confirmed, we can update DB directly
-            updateInDB(shapeId, parsedData.updates);
+            const type = parsedData.updates?.type;
+            if (!type) {
+                console.warn("Missing shape type for update:", parsedData);
+                return;
+            }
+            batchManager.enqueue(shapeId, type, parsedData.updates);
         } else if (tempId && state.pendingShapeOps.has(tempId)) {
             // shape not confirmed, push into the pending ops
             const entry = state.pendingShapeOps.get(tempId);
@@ -52,7 +58,14 @@ const saveInDBAndConfirm = async (ws: WebSocket, roomId: string, shape: any) => 
 
         // updates to DB
         pendingEntry.ops.forEach(op => {
-            updateInDB(shapeId, op.updates);
+            const type = op.updates?.type;
+
+            if (!type) {
+                console.log("Missing shape type for pending shape update: ", op);
+                return;
+            }
+
+            batchManager.enqueue(shapeId, type, op.updates)
         });
 
         // clear pending ops
