@@ -43,15 +43,16 @@ const handleShape = (ws: WebSocket, parsedData: any) => {
     }
 }
 
-const saveInDBAndConfirm = async (ws: WebSocket, roomId: string, shape: any) => {
+const saveInDBAndConfirm = async (ws: WebSocket, roomId: string, shapePayload: any) => {
     // store in db
-    const response = await storeInDB(roomId, shape);
-    if (!response) return;
+    const id = await storeInDB(roomId, shapePayload);
+    if (!id) return;
 
     // replay chached events (move, resize, delete)
-    const shapeId = response.id;
+    const shapeId = id;
+    const tempId = shapePayload.tempId;
 
-    const pendingEntry = state.pendingShapeOps.get(shape.tempId);
+    const pendingEntry = state.pendingShapeOps.get(tempId);
 
     if (pendingEntry) {
         pendingEntry.id = shapeId;
@@ -69,14 +70,14 @@ const saveInDBAndConfirm = async (ws: WebSocket, roomId: string, shape: any) => 
         });
 
         // clear pending ops
-        state.pendingShapeOps.delete(shape.tempId);
+        state.pendingShapeOps.delete(tempId);
     }
 
     // send confirmation message
     const payload = {
         type: "shape",
         action: "confirm",
-        tempId: shape.tempId,
+        tempId: tempId,
         id: shapeId,
     }
 
