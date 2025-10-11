@@ -7,6 +7,7 @@ import { Pen } from "./shapes/Pen";
 import { Rectangle } from "./shapes/Rectangle";
 import { TextShape } from "./shapes/TextShape";
 
+const DEBUG = process.env.DEBUG === "true";
 export class ShapeFactory {
     ctx: CanvasRenderingContext2D;
 
@@ -15,20 +16,22 @@ export class ShapeFactory {
     }
 
     createShapeFromPayload(payload: any): BaseShape | null {
+        if (!DEBUG) console.log("[ShapeFactory][createShapeFromPayload] payload received:", payload);
+        const { id, tempId, shape } = payload;
 
-        switch (payload.type) {
+        switch (shape.type) {
             case ShapeTypes.RECTANGLE:
-                return new Rectangle(payload.id, payload.tempId, payload.status, payload.startX, payload.startY, payload.width, payload.height, payload.color);
+                return new Rectangle(id, tempId, "pending", shape.startX, shape.startY, shape.width, shape.height, shape.color);
             case ShapeTypes.ELLIPSE:
-                return new Ellipse(payload.startX, payload.startY, payload.radiusX, payload.radiusY, payload.color);
+                return new Ellipse(id, tempId, "pending", shape.startX, shape.startY, shape.radiusX, shape.radiusY, shape.color);
             case ShapeTypes.LINE:
-                return new Line(payload.startX, payload.startY, payload.endX, payload.endY, payload.color);
+                return new Line(id, tempId, "pending", shape.startX, shape.startY, shape.endX, shape.endY, shape.color);
             case ShapeTypes.ARROW:
-                return new Arrow(payload.startX, payload.startY, payload.endX, payload.endY, payload.color);
+                return new Arrow(id, tempId, "pending", shape.startX, shape.startY, shape.endX, shape.endY, shape.color);
             case ShapeTypes.PEN:
-                return new Pen(payload.points, payload.color);
+                return new Pen(id, tempId, "pending", shape.points, shape.color);
             case ShapeTypes.TEXT:
-                return new TextShape(payload.startX, payload.startY, payload.text, payload.fontSize, payload.color, payload.maxWidth, this.ctx);
+                return new TextShape(id, tempId, "pending", shape.startX, shape.startY, shape.text, shape.fontSize, shape.color, shape.maxWidth, this.ctx);
             default:
                 console.log("Unknown shape received from websocket, shape:", payload);
         }

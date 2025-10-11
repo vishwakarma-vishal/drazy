@@ -17,8 +17,8 @@ export class TextShape extends BaseShape {
     minWidth: number = 50;
     minHeight: number = 20;
 
-    constructor(startX: number, startY: number, text: string, fontSize: number, color: string, maxWidth: number, ctx: CanvasRenderingContext2D, fontFamily: string = "cursive") {
-        super(color);
+    constructor(id: string = "", tempId: string, status: string, startX: number, startY: number, text: string, fontSize: number, color: string, maxWidth: number, ctx: CanvasRenderingContext2D, fontFamily: string = "cursive") {
+        super(color, id, tempId, status);
         this.startX = startX;
         this.startY = startY;
         this.text = text;

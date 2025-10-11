@@ -6,8 +6,8 @@ export class Pen extends BaseShape {
     minWidth: number = 40;
     minHeight: number = 20;
 
-    constructor(points: { x: number, y: number }[], color: string) {
-        super(color);
+    constructor(id: string = "", tempId: string, status: string, points: { x: number, y: number }[], color: string) {
+        super(color, id, tempId, status);
         this.points = points;
     }
 

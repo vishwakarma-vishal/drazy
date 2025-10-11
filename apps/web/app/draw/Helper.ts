@@ -1,7 +1,13 @@
 import { JwtPayload, decode } from "jsonwebtoken";
 import { BaseShape } from "./shapes/BaseShape";
 import { Rectangle } from "./shapes/Rectangle";
+import { Ellipse } from "./shapes/Ellipse";
+import { Line } from "./shapes/Line";
+import { Arrow } from "./shapes/Arrow";
+import { Pen } from "./shapes/Pen";
+import { TextShape } from "./shapes/TextShape";
 
+const DEBUG = process.env.DEBUG === "true";
 interface myJsonPayload extends JwtPayload {
     id: string
 }
@@ -38,16 +44,16 @@ export function confirmStatusAndUpdateId(shapes: BaseShape[], payload: any): boo
     try {
         const { id, tempId } = payload;
 
-        const found: Rectangle | undefined = shapes.find(
-            s => (s instanceof Rectangle) && String(s.tempId) === String(tempId)
-        ) as Rectangle | undefined;
+        const found: BaseShape | undefined = shapes.find(
+            s => String(s.getTempId()) === String(tempId)
+        );
 
         const shape = found ?? null;
 
         if (!shape) return false;
 
-        shape.status = "confirmed";
-        shape.id = id;
+        shape.setId(id);
+        shape.setStatus("confirmed");
         // console.log("After confirmation shape snapshot ->", JSON.parse(JSON.stringify(shape)));
 
         return true;
@@ -58,27 +64,67 @@ export function confirmStatusAndUpdateId(shapes: BaseShape[], payload: any): boo
 }
 
 export function updateShapeWithId(shapes: BaseShape[], payload: any) {
-    const {id, tempId} = payload;
-    const { startX, startY, width, height, color } = payload.updates;
+    if (!DEBUG) console.log("[Helper][updateShapeWithId] Received payload:", payload);
+
+    const { id, tempId } = payload;
+    const { startX, startY, width, height, radiusX, radiusY, endX, endY, points, text, fontSize, maxWidth, fontFamily, color } = payload.shape;
 
     // check id first then the tempId
-    const found: Rectangle | undefined = shapes.find(
-        s => (s instanceof Rectangle) && (String(s.id) === String(id) || (tempId && String(s.tempId) === String(tempId))) 
-    ) as Rectangle | undefined;
+    const found: BaseShape | undefined = shapes.find(
+        s => ((String(s.getId()) === String(id)) || (tempId && String(s.getTempId()) === String(tempId)))
+    );
+
+    if (!DEBUG) console.log("[Helper][updateShapeWithId] Matching shape with id/tempId:", found);
 
     const shape = found ?? null;
 
     if (!shape) return;
 
-    if (!shape.id && id) {
-        shape.id = id;
+    if (!shape.getId() && id) {
+        shape.setId(id);
     }
 
-    // shape.status = status;
-    shape.startX = startX;
-    shape.startY = startY;
-    shape.width = width;
-    shape.height = height;
+    if (shape instanceof Rectangle) {
+        shape.startX = startX;
+        shape.startY = startY;
+        shape.width = width;
+        shape.height = height;
+    }
+
+    else if (shape instanceof Ellipse) {
+        shape.startX = startX;
+        shape.startY = startY;
+        shape.radiusX = radiusX;
+        shape.radiusY = radiusY;
+    }
+
+    else if (shape instanceof Line) {
+        shape.startX = startX;
+        shape.startY = startY;
+        shape.endX = endX;
+        shape.endY = endY;
+    }
+
+    else if (shape instanceof Arrow) {
+        shape.startX = startX;
+        shape.startY = startY;
+        shape.endX = endX;
+        shape.endY = endY;
+    }
+
+    else if (shape instanceof Pen) {
+        shape.points = points;
+    }
+
+    else if (shape instanceof TextShape) {
+        shape.startX = startX;
+        shape.startY = startY;
+        shape.text = text;
+        shape.fontSize = fontSize;
+        shape.maxWidth = maxWidth;
+        if (fontFamily) shape.fontFamily = fontFamily;
+    }
+
     shape.setColor(color);
 }
 

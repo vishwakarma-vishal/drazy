@@ -6,6 +6,12 @@ import { TextShape } from "./shapes/TextShape";
 import { createTextInput } from "./TextInputHelper";
 import { confirmStatusAndUpdateId, generateTempId, updateShapeWithId } from "./Helper";
 import { Rectangle } from "./shapes/Rectangle";
+import { Ellipse } from "./shapes/Ellipse";
+import { Line } from "./shapes/Line";
+import { Arrow } from "./shapes/Arrow";
+import { Pen } from "./shapes/Pen";
+
+const DEBUG = process.env.DEBUG === "true";
 
 export class CanvasDrawer {
     canvas: HTMLCanvasElement;
@@ -61,7 +67,6 @@ export class CanvasDrawer {
 
         // draw all the content again
         this.shapes.forEach((shape) => {
-            // console.log("shape -> ", shape);
             shape.draw(this.ctx);
         });
     }
@@ -69,7 +74,6 @@ export class CanvasDrawer {
     // get roomshape form the BE and render then on canvas
     private async getCanvasContent() {
         this.shapes = await fetchShapes(this.roomId, this.ctx);
-        // console.log("intial shapes -> ", this.shapes);
         this.drawShapes();
     }
 
@@ -77,14 +81,13 @@ export class CanvasDrawer {
     private websocketConnection() {
         this.socket.onmessage = (message) => {
             const payload = JSON.parse(message.data);
-            // console.log("payload -> ", payload);
+            if (DEBUG) console.log(`[CanvasDrawer][websocketConnection] payload received: ${payload}`);
 
             const { type, action, shape } = payload;
 
             // create status-pending
             if (type === "shape" && action === "create") {
-                let newShape: BaseShape | null = this.shapeFactory.createShapeFromPayload(shape);
-                // console.log("receiver: before shape snapshot ->", JSON.parse(JSON.stringify(newShape)));
+                let newShape: BaseShape | null = this.shapeFactory.createShapeFromPayload(payload);
 
                 if (newShape) {
                     this.shapes.push(newShape);
@@ -107,15 +110,14 @@ export class CanvasDrawer {
 
     // helper- create shape payload add it into the shapes and send it via websocket
     private finalizeShape(payload: any) {
-        const { action, shape } = payload;
+        const { action } = payload;
 
         if (action === "create") {
             // create shape object
-            const newShape = this.shapeFactory.createShapeFromPayload(shape);
+            const newShape = this.shapeFactory.createShapeFromPayload(payload);
             if (newShape instanceof TextShape) newShape.updateHeight(this.ctx);
 
             if (newShape) {
-                // console.log("sender:before shape snapshot ->", JSON.parse(JSON.stringify(newShape)));
                 // apply locally
                 this.shapes.push(newShape);
                 this.drawShapes();
@@ -132,7 +134,6 @@ export class CanvasDrawer {
     }
 
     handleDown = (e: MouseEvent) => {
-        console.log("mouse down");
         this.clicked = true;
         this.startX = e.offsetX;
         this.startY = e.offsetY;
@@ -255,103 +256,122 @@ export class CanvasDrawer {
 
     handleUp = (e: MouseEvent) => {
         if (!this.clicked) return;
-        const payload = {
-            type: "shape",
-            roomId: this.roomId,
-            action: "create",
-            shape: {}
-        }
 
         const shapeTempId = generateTempId();
         if (!shapeTempId) {
             // add logout functinality here
-            console.log("user is not logged in, logging out...");
+            console.warn("user is not logged in, logging out...");
         }
 
-        // If we were resizing or moving, just finish the action
-        if (this.selectedShape) {
-            // finilize the update sync with backend
-            if (this.selectedShape instanceof Rectangle) {
-                const payload = {
-                    type: "shape",
-                    roomId: this.roomId,
-                    action: "update",
-                    id: this.selectedShape.id,
-                    tempId: this.selectedShape.tempId,
-                    updates: {}
-                }
+        const isUpdateOn = this.selectedShape !== null;
 
-                payload.updates = { type: this.selectedShapeType, startX: this.selectedShape.startX, startY: this.selectedShape.startY, width: this.selectedShape.width, height: this.selectedShape.height, color: this.selectedShape.getColor() }
-
-                this.finalizeShape(payload);
-            }
-
-            this.selectedHandle = null;
-            this.selectedShape = null; // optional: keep selection if you want
-            this.clicked = false;
-            this.drawShapes();
-            return;
+        const payload = {
+            type: "shape",
+            roomId: this.roomId,
+            action: isUpdateOn ? "update" : "create",
+            id: isUpdateOn ? this.selectedShape?.getId() : "",
+            tempId: isUpdateOn ? this.selectedShape?.getTempId() : shapeTempId,
+            shape: {}
         }
 
         const width = e.offsetX - this.startX;
         const height = e.offsetY - this.startY;
 
-        if (this.selectedShapeType === ShapeTypes.RECTANGLE) {
-            payload.shape = { type: ShapeTypes.RECTANGLE, id: "", tempId: shapeTempId, status: "pending", startX: this.startX, startY: this.startY, width, height, color: this.selectedColor }
-        }
-
-        else if (this.selectedShapeType === ShapeTypes.ELLIPSE) {
-            const radiusX = Math.abs(e.offsetX - this.startX) / 2;
-            const radiusY = Math.abs(e.offsetY - this.startY) / 2;
-
-            payload.shape = { type: ShapeTypes.ELLIPSE, startX: this.startX, startY: this.startY, radiusX, radiusY, color: this.selectedColor };
-        }
-
-        else if (this.selectedShapeType === ShapeTypes.LINE) {
-
-            payload.shape = { type: ShapeTypes.LINE, startX: this.startX, startY: this.startY, endX: e.offsetX, endY: e.offsetY, color: this.selectedColor };
-        }
-
-        else if (this.selectedShapeType === ShapeTypes.ARROW) {
-
-            payload.shape = { type: ShapeTypes.ARROW, startX: this.startX, startY: this.startY, endX: e.offsetX, endY: e.offsetY, color: this.selectedColor };
-        }
-
-        else if (this.selectedShapeType === ShapeTypes.PEN) {
-            if (!this.drawing) return;
-            this.penPath.push({ x: e.offsetX, y: e.offsetY });
-
-            payload.shape = { type: ShapeTypes.PEN, points: this.penPath, color: this.selectedColor };
-            this.drawing = false;
-        }
-
-        else if (this.selectedShapeType === ShapeTypes.TEXT) {
-            const rect = this.canvas.getBoundingClientRect();
-            this.dragEndX = e.clientX - rect.left;
-
-            // Determine width of the input box
-            const dragWidth = Math.abs(this.dragEndX - this.dragStartX);
-
-            let promise: Promise<any | null>;
-            if (dragWidth <= 2) {
-                // Click case
-                promise = createTextInput(this.canvas, this.dragStartX, this.dragStartY, this.selectedColor);
-            } else {
-                // Drag case
-                promise = createTextInput(this.canvas, this.dragStartX, this.dragStartY, this.selectedColor, this.dragEndX);
+        // creating payload
+        if (this.selectedShape) {
+            // for update (move, resize)
+            if (this.selectedShape instanceof Rectangle) {
+                payload.shape = { type: ShapeTypes.RECTANGLE, startX: this.selectedShape.startX, startY: this.selectedShape.startY, width: this.selectedShape.width, height: this.selectedShape.height, color: this.selectedShape.getColor() }
             }
+            else if (this.selectedShape instanceof Ellipse) {
+                payload.shape = { type: ShapeTypes.ELLIPSE, startX: this.selectedShape.startX, startY: this.selectedShape.startY, radiusX: this.selectedShape.radiusX, radiusY: this.selectedShape.radiusY, color: this.selectedShape.getColor() };
+            }
+            else if (this.selectedShape instanceof Line) {
+                payload.shape = { type: ShapeTypes.LINE, startX: this.selectedShape.startX, startY: this.selectedShape.startY, endX: this.selectedShape.endX, endY: this.selectedShape.endY, color: this.selectedShape.getColor() };
+            }
+            else if (this.selectedShape instanceof Arrow) {
+                payload.shape = { type: ShapeTypes.ARROW, startX: this.selectedShape.startX, startY: this.selectedShape.startY, endX: this.selectedShape.endX, endY: this.selectedShape.endY, color: this.selectedShape.getColor() };
+            }
+            else if (this.selectedShape instanceof Pen) {
+                payload.shape = { type: ShapeTypes.PEN, points: this.selectedShape.points, color: this.selectedShape.getColor() };
+            }
+            else if (this.selectedShape instanceof TextShape) {
+                payload.shape = { type: ShapeTypes.TEXT, startX: this.selectedShape.startX, startY: this.selectedShape.startY, text: this.selectedShape.text, fontSize: this.selectedShape.fontSize, maxWidth: this.selectedShape.maxWidth, color: this.selectedShape.getColor() }
+            }
+            else {
+                console.warn("Unknown shape selected, shape:", this.selectedShape);
+            }
+        } else {
+            // for new shape
+            switch (this.selectedShapeType) {
+                case (ShapeTypes.RECTANGLE): {
+                    payload.shape = {
+                        type: ShapeTypes.RECTANGLE, startX: this.startX, startY: this.startY, width: width, height: height, color: this.selectedColor
+                    }
+                    break;
+                }
 
-            promise.then((shapeProp) => {
-                if (!shapeProp) return;
+                case (ShapeTypes.ELLIPSE): {
+                    const radiusX = Math.abs(e.offsetX - this.startX) / 2;
+                    const radiusY = Math.abs(e.offsetY - this.startY) / 2;
 
-                payload.shape = { type: ShapeTypes.TEXT, startX: shapeProp.startX, startY: shapeProp.startY, text: shapeProp.value, fontSize: shapeProp.fontSize, maxWidth: shapeProp.maxWidth, color: shapeProp.color }
+                    payload.shape = { type: ShapeTypes.ELLIPSE, startX: this.startX, startY: this.startY, radiusX, radiusY, color: this.selectedColor };
+                    break;
+                }
 
-                this.finalizeShape(payload);
+                case (ShapeTypes.LINE): {
+                    payload.shape = { type: ShapeTypes.LINE, startX: this.startX, startY: this.startY, endX: e.offsetX, endY: e.offsetY, color: this.selectedColor };
+                    break;
+                }
 
-                this.dragStartX = 0;
-                this.dragStartY = 0;
-                this.dragEndX = 0;
-            });
+                case (ShapeTypes.ARROW): {
+                    payload.shape = { type: ShapeTypes.ARROW, startX: this.startX, startY: this.startY, endX: e.offsetX, endY: e.offsetY, color: this.selectedColor };
+                    break;
+                }
+
+                case (ShapeTypes.PEN): {
+                    if (!this.drawing) return;
+                    this.penPath.push({ x: e.offsetX, y: e.offsetY });
+
+                    payload.shape = { type: ShapeTypes.PEN, points: this.penPath, color: this.selectedColor };
+                    this.drawing = false;
+                    break;
+                }
+
+                case (ShapeTypes.TEXT): {
+                    const rect = this.canvas.getBoundingClientRect();
+                    this.dragEndX = e.clientX - rect.left;
+
+                    // Determine width of the input box
+                    const dragWidth = Math.abs(this.dragEndX - this.dragStartX);
+
+                    let promise: Promise<any | null>;
+                    if (dragWidth <= 2) {
+                        // Click case
+                        promise = createTextInput(this.canvas, this.dragStartX, this.dragStartY, this.selectedColor);
+                    } else {
+                        // Drag case
+                        promise = createTextInput(this.canvas, this.dragStartX, this.dragStartY, this.selectedColor, this.dragEndX);
+                    }
+
+                    promise.then((shapeProp) => {
+                        if (!shapeProp) return;
+
+                        payload.shape = { type: ShapeTypes.TEXT, startX: shapeProp.startX, startY: shapeProp.startY, text: shapeProp.value, fontSize: shapeProp.fontSize, maxWidth: shapeProp.maxWidth, color: shapeProp.color }
+
+                        this.finalizeShape(payload);
+
+                        this.dragStartX = 0;
+                        this.dragStartY = 0;
+                        this.dragEndX = 0;
+                    });
+                    break;
+                }
+
+                default: {
+                    console.warn("Unknow shapeType selected, selectedShapeType:", this.selectedShapeType);
+                }
+            }
         }
 
         if (Object.keys(payload.shape).length > 0) {

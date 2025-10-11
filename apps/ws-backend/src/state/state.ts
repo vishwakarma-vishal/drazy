@@ -8,9 +8,7 @@ interface UserI {
 
 interface pendingShapeI {
     id?: string;
-    ops: { updates?: {
-        type:string
-    } }[];
+    ops: { type: string }[];
 }
 
 // userId → UserI

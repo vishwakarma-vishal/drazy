@@ -27,24 +27,24 @@ export const fetchShapes = async (roomId: string, ctx: CanvasRenderingContext2D)
             }
             else if (item.ellipse) {
                 const prop = item.ellipse;
-                return new Ellipse(prop.startX, prop.startY, prop.radiusX, prop.radiusY, prop.color);
+                return new Ellipse(prop.id, prop.tempId, "confirmed", prop.startX, prop.startY, prop.radiusX, prop.radiusY, prop.color);
             }
             else if (item.line) {
                 const prop = item.line;
-                return new Line(prop.startX, prop.startY, prop.endX, prop.endY, prop.color);
+                return new Line(prop.id, prop.tempId, "confirmed", prop.startX, prop.startY, prop.endX, prop.endY, prop.color);
             }
             else if (item.arrow) {
                 const prop = item.arrow;
-                return new Arrow(prop.startX, prop.startY, prop.endX, prop.endY, prop.color);
+                return new Arrow(prop.id, prop.tempId, "confirmed", prop.startX, prop.startY, prop.endX, prop.endY, prop.color);
             }
             // for pen (stroke)
             else if (item.stroke) {
                 const prop = item.stroke;
-                return new Pen(JSON.parse(prop.points), prop.color);
+                return new Pen(prop.id, prop.tempId, "confirmed", prop.points, prop.color);
             }
             else if (item.text) {
                 const prop = item.text;
-                return new TextShape(prop.startX, prop.startY, prop.text, prop.fontSize, prop.color, prop.maxWidth, ctx);
+                return new TextShape(prop.id, prop.tempId, "confirmed", prop.startX, prop.startY, prop.text, prop.fontSize, prop.color, prop.maxWidth, ctx);
             }
             else {
                 console.log("Unknown shape received, skipping -> ", item);

@@ -11,8 +11,8 @@ export class Ellipse extends BaseShape {
 
     // follow this centerX -> startX + radiusX, centery -> startY + radiusY
 
-    constructor(startX: number, startY: number, radiusX: number, radiusY: number, color: string) {
-        super(color);
+    constructor(id: string = "", tempId: string, status: string, startX: number, startY: number, radiusX: number, radiusY: number, color: string) {
+        super(color, id, tempId, status);
         this.startX = startX;
         this.startY = startY;
         this.radiusX = radiusX;

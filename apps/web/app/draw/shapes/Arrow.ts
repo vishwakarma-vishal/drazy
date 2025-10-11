@@ -8,8 +8,8 @@ export class Arrow extends BaseShape {
     // constraints
     minLength: number = 23;
 
-    constructor(startX: number, startY: number, endX: number, endY: number, color: string) {
-        super(color);
+    constructor(id: string = "", tempId: string, status: string, startX: number, startY: number, endX: number, endY: number, color: string) {
+        super(color, id, tempId, status);
         this.startX = startX;
         this.startY = startY;
         this.endX = endX;

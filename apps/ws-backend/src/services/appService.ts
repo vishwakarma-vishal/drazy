@@ -4,53 +4,54 @@ import { storeInDB } from "./dbService";
 import { broadcastMessage } from "./wsService";
 import { batchManager } from "./batchManager";
 
+const DEBUG = process.env.DEBUG;
+
 const handleShape = (ws: WebSocket, parsedData: any) => {
-    const { action, roomId } = parsedData;
+    if (DEBUG) console.log("[appService][handleShape] Shape payload received: ", parsedData)
+    const { id, tempId, action, roomId, shape } = parsedData;
 
     if (action === "create") {
         // brodcast immediately
         broadcastMessage(ws, roomId, parsedData, false);
 
         // initialize pending ops for this tempId
-        state.pendingShapeOps.set(parsedData.shape.tempId, { ops: [] });
+        state.pendingShapeOps.set(tempId, { ops: [] });
 
         // async DB save
-        saveInDBAndConfirm(ws, roomId, parsedData.shape);
+        saveInDBAndConfirm(ws, roomId, tempId, shape);
     }
 
     else if (action === "update") {
         // broadcast immediately
         broadcastMessage(ws, roomId, parsedData, false);
 
-        const shapeId = parsedData.id;
-        const tempId = parsedData.tempId;
+        const shapeId = id; // id only available for confirm shapes
 
         if (shapeId) {
             // shape is confirmed, we can update DB directly
-            const type = parsedData.updates?.type;
+            const type = shape?.type;
             if (!type) {
                 console.warn("Missing shape type for update:", parsedData);
                 return;
             }
-            batchManager.enqueue(shapeId, type, parsedData.updates);
+            batchManager.enqueue(shapeId, type, shape);
         } else if (tempId && state.pendingShapeOps.has(tempId)) {
             // shape not confirmed, push into the pending ops
             const entry = state.pendingShapeOps.get(tempId);
-            entry?.ops.push(parsedData);
+            entry?.ops.push(parsedData.shape);
         } else {
             console.log("Update received from Unknown tempId", tempId);
         }
     }
 }
 
-const saveInDBAndConfirm = async (ws: WebSocket, roomId: string, shapePayload: any) => {
+const saveInDBAndConfirm = async (ws: WebSocket, roomId: string, tempId: string, shapePayload: any) => {
     // store in db
     const id = await storeInDB(roomId, shapePayload);
     if (!id) return;
 
     // replay chached events (move, resize, delete)
     const shapeId = id;
-    const tempId = shapePayload.tempId;
 
     const pendingEntry = state.pendingShapeOps.get(tempId);
 
@@ -59,14 +60,14 @@ const saveInDBAndConfirm = async (ws: WebSocket, roomId: string, shapePayload: a
 
         // updates to DB
         pendingEntry.ops.forEach(op => {
-            const type = op.updates?.type;
+            const type = op?.type;
 
             if (!type) {
                 console.log("Missing shape type for pending shape update: ", op);
                 return;
             }
 
-            batchManager.enqueue(shapeId, type, op.updates)
+            batchManager.enqueue(shapeId, type, op)
         });
 
         // clear pending ops
