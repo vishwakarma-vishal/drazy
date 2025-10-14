@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { extendedRequest } from "../middleware/auth.js";
 import { client } from "@repo/db";
+import { logger } from "../utils/logger.js";
 
 const addNewRoom = async (req: extendedRequest, res: Response) => {
     try {
@@ -28,7 +29,6 @@ const addNewRoom = async (req: extendedRequest, res: Response) => {
             roomId: createdRoom.id
         });
     } catch (error) {
-        console.log(error)
         res.status(500).json({
             success: false,
             message: "Internal server error."
@@ -96,6 +96,7 @@ const updateRoomName = async (req: extendedRequest, res: Response) => {
         }
 
         if (room.adminId != userId) {
+            logger.warn("roomController", "updateRoomName", "Unauthorized user try to change room name, userId:", userId);
             return res.status(401).json({
                 success: false,
                 message: "Permission denied."
@@ -140,6 +141,7 @@ const deleteRoom = async (req: extendedRequest, res: Response) => {
         }
 
         if (room.adminId != userId) {
+            logger.warn("roomController", "deleteRoom", "Unauthorized user try to delete room, userId:", userId);
             return res.status(401).json({
                 success: false,
                 message: "Permission denied."

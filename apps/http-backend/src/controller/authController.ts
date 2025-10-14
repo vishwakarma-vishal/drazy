@@ -2,13 +2,13 @@ import type { Request, Response } from "express";
 import { client, Prisma } from "@repo/db"
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { logger } from "../utils/logger.js";
 
 //helper function
-
 const generateJWT = (user: { id: string }): string => {
     const SECRET = process.env.JWT_SECRET;
 
-    if (!SECRET) throw new Error("JWT is not defined in the environment varible");
+    if (!SECRET) throw new Error("JWT is not defined in the environment variable");
 
     return jwt.sign({ id: user.id }, SECRET, { expiresIn: '1h' });
 }
@@ -36,6 +36,7 @@ const signUpController = async (req: Request, res: Response) => {
         });
     } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+            logger.error("authController", "signUpController", "User already exist", error);
             return res.status(400).json({
                 success: false,
                 message: "User already exist."

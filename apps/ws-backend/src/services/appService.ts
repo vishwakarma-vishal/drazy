@@ -3,11 +3,11 @@ import { state } from "../state/state";
 import { storeInDB } from "./dbService";
 import { broadcastMessage } from "./wsService";
 import { batchManager } from "./batchManager";
-
-const DEBUG = process.env.DEBUG;
+import { logger } from "../utils/logger";
 
 const handleShape = (ws: WebSocket, parsedData: any) => {
-    if (DEBUG) console.log("[appService][handleShape] Shape payload received: ", parsedData)
+    logger.info("appService", "handleShape", "Shape payload received:", parsedData);
+
     const { id, tempId, action, roomId, shape } = parsedData;
 
     if (action === "create") {
@@ -31,7 +31,7 @@ const handleShape = (ws: WebSocket, parsedData: any) => {
             // shape is confirmed, we can update DB directly
             const type = shape?.type;
             if (!type) {
-                console.warn("Missing shape type for update:", parsedData);
+                logger.warn("appService", "handleShape", "Missing shape type for update, parsedData:", parsedData)
                 return;
             }
             batchManager.enqueue(shapeId, type, shape);
@@ -40,7 +40,7 @@ const handleShape = (ws: WebSocket, parsedData: any) => {
             const entry = state.pendingShapeOps.get(tempId);
             entry?.ops.push(parsedData.shape);
         } else {
-            console.log("Update received from Unknown tempId", tempId);
+            logger.warn("appService", "handleShape", "Update received from Unknown tempId:", tempId);
         }
     }
 }
@@ -63,7 +63,7 @@ const saveInDBAndConfirm = async (ws: WebSocket, roomId: string, tempId: string,
             const type = op?.type;
 
             if (!type) {
-                console.log("Missing shape type for pending shape update: ", op);
+                logger.warn("appService", "saveInDBAndConfirm", "Missing shape type for pending shape, update op:", op);
                 return;
             }
 

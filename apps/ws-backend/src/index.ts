@@ -5,7 +5,7 @@ dotenv.config({ path: "../../.env" });
 import { validateUser } from "./utils/validate";
 import { addUser, joinRoom, leaveRoom, removeUser } from "./state/manage";
 import { handleShape } from "./services/appService";
-import { printRoom, printState, printUser } from "./utils/logger";
+import { printState } from "./utils/logger";
 
 const WS_PORT = process.env.WS_PORT;
 
@@ -38,7 +38,6 @@ wss.on("connection", (ws, request) => {
     // manage messages
     ws.on("message", (data) => {
         const parsedData = JSON.parse(data.toString());
-        // console.log("parsed ", parsedData);
 
         if (parsedData.type === "join") {
             const response = joinRoom(userId, parsedData.roomId);

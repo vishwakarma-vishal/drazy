@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import pkg from 'jsonwebtoken';
+import { logger } from "../utils/logger.js";
 const { verify, JsonWebTokenError, TokenExpiredError } = pkg;
 
 export interface extendedRequest extends Request {
@@ -37,6 +38,7 @@ export const auth = (req: extendedRequest, res: Response, next: NextFunction) =>
         const decodedToken = verify(token, JWT_SECRET) as myJsonPayload;
 
         if (!decodedToken.id) {
+            logger.info("auth", "auth", "Invalid token provided", token);
             return res.status(401).json({
                 success: false,
                 message: "Token is invalid: missing user id",
@@ -46,7 +48,6 @@ export const auth = (req: extendedRequest, res: Response, next: NextFunction) =>
         req.userId = decodedToken.id;
         next();
     } catch (error) {
-        // console.log(error);
         if (error instanceof TokenExpiredError) {
             return res.status(401).json({
                 success: false,

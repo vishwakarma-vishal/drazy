@@ -1,4 +1,5 @@
 import { client } from "@repo/db";
+import { logger } from "../utils/logger";
 
 const checkRoomStatus = async (roomId: string): Promise<boolean> => {
     try {
@@ -11,7 +12,7 @@ const checkRoomStatus = async (roomId: string): Promise<boolean> => {
         if (room) return true;
         return false;
     } catch (error) {
-        console.log("Error while checking for room status, error:", error);
+        logger.error("dbService", "checkRoomStatus", "Error while checking for room status, error:", error)
         return false;
     }
 }
@@ -52,7 +53,7 @@ const storeInDB = async (roomId: string, shapePayload: any): Promise<string | nu
             }
             break;
         default:
-            console.warn("Unknown shape type received, shape:", shapePayload);
+            logger.warn("dbService", "storeInDB", "Unknown shape type received, shape:", shapePayload)
             break;
     }
 
@@ -76,7 +77,7 @@ const storeInDB = async (roomId: string, shapePayload: any): Promise<string | nu
 
         return response.id;
     } catch (error) {
-        console.log("Error while storing in the DB, error:", error);
+        logger.error("dbService", "storeInDB", "Error while storing in the DB, error:", error)
         return null;
     }
 }

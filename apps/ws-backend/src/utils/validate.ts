@@ -1,6 +1,7 @@
 import { JwtPayload } from "jsonwebtoken";
 import jwt from "jsonwebtoken";
 import { IncomingMessage } from "http";
+import { logger } from "./logger";
 
 interface MyJwtToken extends JwtPayload {
     id: string;
@@ -14,10 +15,8 @@ const validateUser = (request: IncomingMessage): string | null => {
         const url = new URL(request.url || "/", base);
         token = url.searchParams.get("token");
 
-        // console.log(token);
-
         if (!token) {
-            console.log("Token missing in request");
+            logger.info("validate", "validateuser", "Token missing in request")
             return null;
         }
 
@@ -28,7 +27,7 @@ const validateUser = (request: IncomingMessage): string | null => {
         const decode = jwt.verify(token, JWT_SECRET) as MyJwtToken;
         return decode.id || null;
     } catch (error) {
-        // console.log("Jwt vefification failed with error ->", error);
+        logger.error("validate", "validateuser", "Jwt vefification failed with error:", error)
         return null;
     }
 }

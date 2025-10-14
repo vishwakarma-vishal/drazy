@@ -1,5 +1,6 @@
 import { WebSocket } from "ws";
 import { state } from "../state/state";
+import { logger } from "../utils/logger";
 
 const broadcastMessage = (ws: WebSocket, roomId: string, payload: any, toAll: boolean) => {
     const userIds = state.getRoom(roomId);
@@ -12,7 +13,7 @@ const broadcastMessage = (ws: WebSocket, roomId: string, payload: any, toAll: bo
             try {
                 user.ws.send(JSON.stringify(payload));
             } catch (error) {
-                console.log(`Failed to send message to ${userId}`, error);
+                logger.error("wsService", "broadcastMessage", `Failed to send message to ${userId}`, error)
             }
         }
     });

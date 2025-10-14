@@ -1,15 +1,26 @@
 import { state } from "../state/state";
+import { log } from "@repo/common";
 
-const DEBUG = process.env.DEBUG === "true";
+const makeLogger = (scope: string) => ({
+    info: (fileName: string, funcName: string, message: string, data?: any): void =>
+        log.info(scope, fileName, funcName, message, data),
 
-if (process.env.DEBUG === undefined) throw new Error("DEBUG is not defined in the env file.");
+    warn: (fileName: string, funcName: string, warning: string, data?: any): void =>
+        log.warn(scope, fileName, funcName, warning, data),
 
-// helper functions (use to debug)
+    error: (fileName: string, funcName: string, message: string, err?: any): void =>
+        log.error(scope, fileName, funcName, message, err)
+});
+
+const logger = makeLogger("WS");
+
+const fileName = "logger";
+
 const printUser = () => {
-    if (!DEBUG) return;
-    console.log("🟢 Current Users:");
+    logger.info(fileName, "printUser", "🟢 Current Users:");
+
     state.users.forEach((user, userId) => {
-        console.log(`- UserID: ${userId}`, {
+        logger.info(fileName, "printUser", `UserID: ${userId}`, {
             ws: user.ws.readyState === 1 ? "OPEN" : "CLOSED",
             rooms: Array.from(user.rooms),
         });
@@ -17,31 +28,29 @@ const printUser = () => {
 }
 
 const printRoom = () => {
-    if (!DEBUG) return;
-    console.log("🔵 Current Rooms:");
+    logger.info(fileName, "printRoom", "🔵 Current Rooms:");
+
     state.rooms.forEach((users, roomId) => {
-        console.log(`- RoomID: ${roomId}`, Array.from(users));
+        logger.info(fileName, "printRoom", `- RoomID: ${roomId}`, users);
     });
 }
 
 const printPendingShapeOps = () => {
-    if (!DEBUG) return;
-    console.log("🟡 Pending Shape ops:");
-    state.pendingShapeOps.forEach((entry) => {
-        console.log({
-            id: entry.id,
-            ops: entry.ops,
-        });
+    logger.info(fileName, "printPendingShapeOps", "🟡 Pending Shape ops:");
+
+    state.pendingShapeOps.forEach((entry, key) => {
+        logger.info(fileName, "printPendingShapeOps", `key: ${key}`, entry);
     });
-}
+};
+
 
 const printState = () => {
-    if (!DEBUG) return;
 
+    logger.info(fileName, "printState", `------------------------State start-----------------------------`)
     printUser();
     printRoom();
     printPendingShapeOps();
+    logger.info(fileName, "printState", `------------------------State end-----------------------------`)
 };
 
-export { printRoom, printUser, printState };
-
+export { logger, printRoom, printUser, printState };

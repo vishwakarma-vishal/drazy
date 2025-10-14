@@ -1,9 +1,9 @@
 // batchManager.ts
 import { client } from "@repo/db";
+import { logger } from "../utils/logger";
 
 const BATCH_INTERVAL = 2000; // 2 second
 const MAX_BATCH_SIZE = 20;
-const DEBUG = process.env.DEBUG === "true";
 
 type UpdateEntry = Record<string, any>;
 
@@ -19,9 +19,8 @@ const batchManager = {
 
         buffer[type][id].push(updates);
 
-        if (DEBUG) {
-            console.log(`[BatchManager][QUEUE] Queued ${type}:${id} | Total: ${buffer[type][id].length}`);
-        }
+        logger.info("batchManager", "queue", `Queued ${type}:${id} | Total: ${buffer[type][id].length}`);
+
 
         // if too many updates in memory flush immediately
         const totalQueued = Object.values(buffer)
@@ -29,7 +28,7 @@ const batchManager = {
 
         // Adaptive flush logic
         if (totalQueued >= MAX_BATCH_SIZE) {
-            if (DEBUG) console.log(`[BatchManager][QUEUE] Max batch size reached (${totalQueued}), flushing now.`);
+            logger.info("batchManager", "queue", `Max batch size reached (${totalQueued}), flushing now.`);
             flush();
         }
 
@@ -40,7 +39,7 @@ const batchManager = {
 
 async function flush() {
     if (flushing) {
-        if (DEBUG) console.log(`[BatchManager][FLUSH] Skipped — already flushing.`);
+        logger.info("batchManager", "flush", "Skipped — already flushing.");
         return;
     }
 
@@ -52,24 +51,23 @@ async function flush() {
     buffer = {};
 
     if (Object.keys(pending).length === 0) {
-        if (DEBUG) console.log(`[BatchManager][FLUSH] No pending updates.`);
+        logger.info("batchManager", "flush", "No pending updates.");
         flushing = false;
         return;
     }
 
-    if (DEBUG) {
-        console.log(`[BatchManager][FLUSH] Starting flush...`);
-        console.log(`[BatchManager][FLUSH] Pending types: ${Object.keys(pending).join(", ")}`);
-    }
+    // for debugging
+    logger.info("batchManager", "flush", "Starting flush...");
+    logger.info("batchManager", "flush", "Pending types:", `${Object.keys(pending).join(", ")}`);
 
     try {
         for (const [type, shapes] of Object.entries(pending)) {
-            if (DEBUG) console.log(`[BatchManager][FLUSH] ${type} → ${Object.keys(shapes).length} shapes.`);
+            logger.info("batchManager", "flush", `${type} →`, `${Object.keys(shapes).length} shapes.`);
 
             const ops: Promise<any>[] = [];
 
             for (const [id, updatesList] of Object.entries(shapes)) {
-                if (DEBUG) console.log(`[BatchManager][FLUSH] Processing id: ${id}, total updates: ${updatesList.length}`);
+                logger.info("batchManager", "flush", `Processing id: ${id}, total updates: ${updatesList.length}`);
 
                 // Remove 'type' from each update object before merging
                 const cleanedUpdatesList = updatesList.map(u => {
@@ -77,11 +75,11 @@ async function flush() {
                     return rest;
                 })
 
-                if (DEBUG) console.log(`[BatchManager][FLUSH] After cleaning type, id->${id}, shapes->${JSON.stringify(cleanedUpdatesList)}`);
+                logger.info("batchManager", "flush", `After cleaning type, id->${id}, shapes`, cleanedUpdatesList);
 
                 const merged = Object.assign({}, ...cleanedUpdatesList); // merge fields
 
-                if (DEBUG) console.log(`[BatchManager][FLUSH] Merged update for id ${id}: ${JSON.stringify(merged)}`);
+                logger.info("batchManager", "flush", `Merged update for id ${id}`, merged);
 
                 // select prisma model to update
                 let model: any;
@@ -93,8 +91,7 @@ async function flush() {
                     case "TEXT": model = client.textShape; break;
                     case "PEN": model = client.stroke; break;
                     default:
-                        if (DEBUG)
-                            console.log(`[BatchManager][SKIP] Unknown shape type: ${type}`);
+                        logger.warn("batchManager", "flush", `Skipped unknown shape type: ${type}`);
                         continue;
                 }
 
@@ -106,29 +103,25 @@ async function flush() {
                 );
 
                 if (ops.length) {
-                    if (DEBUG)
-                        console.log(`[BatchManager][DB] Executing ${ops.length} ${type} updates...`);
+                    logger.info("batchManager", "flush", `DB:Executing ${ops.length} ${type} updates...`);
 
                     const results = await Promise.allSettled(ops);
+                    const success = results.filter(r => r.status === "fulfilled").length;
+                    const failed = results.filter(r => r.status === "rejected").length;
 
-                    if (DEBUG) {
-                        const success = results.filter(r => r.status === "fulfilled").length;
-                        const failed = results.filter(r => r.status === "rejected").length;
-                        console.log(
-                            `[BatchManager][DB] ${type} flush complete. ✅ ${success} success, ❌ ${failed} failed`
-                        );
-                    }
+                    logger.info("batchManager", "flush", `DB:flush complete. ✅ ${success} success, ❌ ${failed} failed`)
                 }
             }
         }
     } catch (err) {
-        console.error(`[BatchManager][ERROR]`, err);
+        logger.error("batchManager", "flush", "Error occured in flush, error", err);
     } finally {
         flushing = false;
 
         // Check if new updates arrived during flush
         if (Object.keys(buffer).length > 0) {
-            if (DEBUG) console.log(`[BatchManager][FLUSH] New updates arrived during flush — scheduling another flush.`);
+            logger.info("batchManager", "flush", `New updates arrived during flush — scheduling another flush.`);
+
             timer = setTimeout(flush, BATCH_INTERVAL);
         }
     }
@@ -136,12 +129,12 @@ async function flush() {
 
 // auto-flush on process exit
 process.on("exit", async () => {
-    if (DEBUG) console.log("[BatchManager] Process exiting. Flushing remaining updates...");
+    logger.info("batchManager", "on EXIT", "Process exiting. Flushing remaining updates...");
     await flush();
 });
 
 process.on("SIGINT", async () => {
-    if (DEBUG) console.log("[BatchManager] SIGINT received. Flushing remaining updates...");
+    logger.info("batchManager", "on SIGINT", "SIGINT received. Flushing remaining updates...");
     await flush();
     process.exit(0);
 });
