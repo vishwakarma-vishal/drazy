@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-     "i" : "pnpm i",
+    "i": "pnpm i",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc -b",
     "dev": "tsc -b && node ./dist/index.js",
@@ -15,6 +15,7 @@
   "description": "",
   "dependencies": {
     "@repo/typescript-config": "workspace:*",
+    "@repo/common": "workspace:*",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/ws": "^8.18.1",
     "dotenv": "^17.2.2",
