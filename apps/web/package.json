@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@repo/db": "workspace:*",
+    "@repo/common": "workspace:*",
     "@types/jsonwebtoken": "^9.0.10",
     "axios": "^1.12.2",
     "dotenv": "^17.2.2",

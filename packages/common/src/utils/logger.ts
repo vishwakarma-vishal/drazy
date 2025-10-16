@@ -1,21 +1,34 @@
-import dotenv from "dotenv";
-dotenv.config({ path: '../../.env' });
+let DEBUG_SCOPES: string;
 
-// DEBUG = "FRONTEND", "HTTP", "WS", "ALL"
+if (typeof window === "undefined") {
+    // server-side (http, ws, next.js server)
+    try {
+        // safe only on Node
+        const dotenv = require("dotenv");
+        dotenv?.config({ path: '../../.env' });
+    } catch { }
+    DEBUG_SCOPES = process.env.DEBUG_SCOPES || "";
+} else {
+    // client-side (next.js client)
+    DEBUG_SCOPES = process.env.NODE_ENV === "development" ? "NEXT" : "";
+}
 
-const DEBUG: string = process.env.DEBUG || "";
+// DEBUG_SCOPES = "NEXT", "HTTP", "WS", "ALL"
 let isInformed: boolean = false;
 
+if (!DEBUG_SCOPES && !isInformed) {
+    console.warn("DEBUG_SCOPES is not defined in env file, default set to false");
+    isInformed = true;
+}
+
 const isScopeEnabled = (scope: string): boolean => {
-    if (!DEBUG && !isInformed) {
-        console.warn("DEBUG is not defined in env file, default set to false");
-        isInformed = true;
+    if (!DEBUG_SCOPES) {
         return false;
     }
 
-    const DEBUG_SCOPES = DEBUG.split(",").map(s => s.toUpperCase());
+    const SCOPES = DEBUG_SCOPES.split(",").map(s => s.toUpperCase());
 
-    return DEBUG_SCOPES.includes(scope.toUpperCase()) || DEBUG_SCOPES.includes("ALL");
+    return SCOPES.includes(scope.toUpperCase()) || SCOPES.includes("ALL");
 }
 
 const log = {
@@ -24,24 +37,21 @@ const log = {
         if (!isScopeEnabled(scope)) return;
         const timestamp = new Date().toISOString();
         const output = data ? JSON.stringify(data) : "";
-        console.log(`[${timestamp}][${scope}:${fileName}:${funcName}] ${message}`);
-        if (output) console.log(`: ${output}`);
+        console.log(`[${timestamp}][${scope}:${fileName}:${funcName}] ${message} : ${output}`);
     },
 
     warn: (scope: string, fileName: string, funcName: string, warning: string, data?: any): void => {
         if (!isScopeEnabled(scope)) return;
         const timestamp = new Date().toISOString();
         const output = data ? JSON.stringify(data) : "";
-        console.warn(`[${timestamp}][${scope}:${fileName}:${funcName}] ${warning}`);
-        if (output) console.log(`: ${output}`);
+        console.warn(`[${timestamp}][${scope}:${fileName}:${funcName}] ${warning} : ${output}`);
     },
 
     error: (scope: string, fileName: string, funcName: string, message: string, err?: any): void => {
         if (!isScopeEnabled(scope)) return;
         const timestamp = new Date().toISOString();
         const output = err ? (err instanceof Error ? err.stack : JSON.stringify(err)) : "";
-        console.error(`[${timestamp}][${scope}:${fileName}:${funcName}] ${message}`);
-        if (output) console.log(`: ${output}`);
+        console.error(`[${timestamp}][${scope}:${fileName}:${funcName}] ${message} : ${output}`);
     }
 }
 

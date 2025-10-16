@@ -3,6 +3,7 @@
 import axios, { AxiosError } from "axios";
 import { useRouter } from "next/navigation";
 import { useRef } from "react";
+import { devLogger } from "../utils/logger";
 
 export default function SignUp() {
     const nameRef = useRef<HTMLInputElement | null>(null);
@@ -20,6 +21,8 @@ export default function SignUp() {
                 email: emailRef.current?.value
             });
 
+            devLogger.info("signup", "SignUp", "Received responseData", responseData);
+
             const data = responseData.data;
             const success = data.success;
 
@@ -28,12 +31,17 @@ export default function SignUp() {
                 localStorage.setItem("token", token);
                 router.push("/dashboard");
                 alert("Signed up Successfully");
+
+                devLogger.info("signup", "SignUp", "Signed up Successfully with token", token);
             }
         } catch (error) {
             if (error instanceof AxiosError && error.status == 400) {
                 alert(error.response?.data.message);
+
+                devLogger.error("signup", "SignUp", error.response?.data.message || "", error);
             }
-            console.log("Something went wrong, ", error);
+
+            devLogger.error("signup", "SignUp", "Something went wrong", error);
         }
     }
 

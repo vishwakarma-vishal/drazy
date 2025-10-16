@@ -4,13 +4,13 @@ import cors from "cors";
 import authRoutes from "./routes/authRoutes.js";
 import roomRoutes from "./routes/roomRoutes.js";
 
-dotenv.config({path: "../../.env"});
+dotenv.config({ path: "../../.env" });
 
 const app = express();
 
 const HTTP_PORT = process.env.HTTP_PORT;
 
-if (process.env.NODE_ENV === "production" && !process.env.FRONTEND_URL){
+if (process.env.NODE_ENV === "production" && !process.env.FRONTEND_URL) {
     throw new Error("FRONTEND_URL must be defined in production");
 }
 
@@ -23,7 +23,7 @@ app.use(cors({
 
 app.use(express.json());
 
-app.listen(HTTP_PORT, ()=> {
+app.listen(HTTP_PORT, () => {
     console.log(`http server is running on port ${HTTP_PORT}`);
 });
 

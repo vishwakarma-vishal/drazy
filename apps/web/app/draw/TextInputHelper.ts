@@ -73,7 +73,6 @@ export function createTextInput(
                 let shapeProp = null;
                 if (textarea.value.trim() !== "") {
                     shapeProp = { startX, startY, value: textarea.value, fontSize, color, maxWidth };
-                    console.log("shapeprop ", shapeProp);
                 }
 
                 resolve(shapeProp);

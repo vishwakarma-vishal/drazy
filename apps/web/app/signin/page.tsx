@@ -3,6 +3,7 @@
 import axios, { AxiosError } from "axios";
 import { useRouter } from "next/navigation";
 import { useRef } from "react";
+import { devLogger } from "../utils/logger";
 
 export default function SignIn() {
     const passRef = useRef<HTMLInputElement | null>(null);
@@ -17,7 +18,9 @@ export default function SignIn() {
                 password: passRef.current?.value,
                 email: emailRef.current?.value
             });
-            
+
+            devLogger.info("signin", "SignIn", "Received responseData", responseData);
+
             const data = responseData.data;
             const success = data.success;
 
@@ -25,14 +28,18 @@ export default function SignIn() {
                 const token = data.token;
                 localStorage.setItem("token", token);
                 router.push("/dashboard");
-                console.log("Sign In successful");
+
+                devLogger.info("signin", "SignIn", "Sign in successful, with token", token);
             }
         } catch (error) {
             if (error instanceof AxiosError) {
                 const errorResponseData = error.response?.data;
                 alert(errorResponseData.message);
+
+                devLogger.error("signin", "SignIn", errorResponseData.message, error);
             }
-            console.log("Something went wrong, ", error);
+
+            devLogger.error("signin", "SignIn", "Something went wrong", error);
         }
     }
 

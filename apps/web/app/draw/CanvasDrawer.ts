@@ -10,8 +10,7 @@ import { Ellipse } from "./shapes/Ellipse";
 import { Line } from "./shapes/Line";
 import { Arrow } from "./shapes/Arrow";
 import { Pen } from "./shapes/Pen";
-
-const DEBUG = process.env.DEBUG === "true";
+import { devLogger } from "../utils/logger";
 
 export class CanvasDrawer {
     canvas: HTMLCanvasElement;
@@ -81,7 +80,7 @@ export class CanvasDrawer {
     private websocketConnection() {
         this.socket.onmessage = (message) => {
             const payload = JSON.parse(message.data);
-            if (DEBUG) console.log(`[CanvasDrawer][websocketConnection] payload received: ${payload}`);
+            devLogger.info("CanvasDrawer", "websocketConnection", "Received payload", payload);
 
             const { type, action, shape } = payload;
 
@@ -260,7 +259,7 @@ export class CanvasDrawer {
         const shapeTempId = generateTempId();
         if (!shapeTempId) {
             // add logout functinality here
-            console.warn("user is not logged in, logging out...");
+            devLogger.warn("Helper", "updateShapeWithId", "user is not logged in, logging out...");
         }
 
         const isUpdateOn = this.selectedShape !== null;
@@ -299,7 +298,7 @@ export class CanvasDrawer {
                 payload.shape = { type: ShapeTypes.TEXT, startX: this.selectedShape.startX, startY: this.selectedShape.startY, text: this.selectedShape.text, fontSize: this.selectedShape.fontSize, maxWidth: this.selectedShape.maxWidth, color: this.selectedShape.getColor() }
             }
             else {
-                console.warn("Unknown shape selected, shape:", this.selectedShape);
+                devLogger.warn("Helper", "updateShapeWithId", "Unknown shape selected, shape", this.selectedShape);
             }
         } else {
             // for new shape
@@ -369,7 +368,7 @@ export class CanvasDrawer {
                 }
 
                 default: {
-                    console.warn("Unknow shapeType selected, selectedShapeType:", this.selectedShapeType);
+                    devLogger.warn("Helper", "updateShapeWithId", "Unknow shapeType selected, selectedShapeType", this.selectedShapeType);
                 }
             }
         }

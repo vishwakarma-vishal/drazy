@@ -6,6 +6,7 @@ import { Pen } from "./shapes/Pen";
 import { Ellipse } from "./shapes/Ellipse";
 import { Arrow } from "./shapes/Arrow";
 import { TextShape } from "./shapes/TextShape";
+import { devLogger } from "../utils/logger";
 
 export const fetchShapes = async (roomId: string, ctx: CanvasRenderingContext2D) => {
     try {
@@ -47,15 +48,15 @@ export const fetchShapes = async (roomId: string, ctx: CanvasRenderingContext2D)
                 return new TextShape(prop.id, prop.tempId, "confirmed", prop.startX, prop.startY, prop.text, prop.fontSize, prop.color, prop.maxWidth, ctx);
             }
             else {
-                console.log("Unknown shape received, skipping -> ", item);
+                devLogger.warn("ShapeService", "fetchShape", "Unknown shape received, skipping item", item);
             }
         });
 
-        console.log("Response-> ", response);
+        devLogger.info("ShapeService", "fetchShape", "Initial shapes", response);
 
         return shapes;
     } catch (error) {
-        console.log("error", error);
+        devLogger.error("ShapeService", "fetchShape", "Something went wrong", error);
         return [];
     }
 }

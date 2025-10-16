@@ -1,4 +1,5 @@
 import { ShapeTypes } from "../constant";
+import { devLogger } from "../utils/logger";
 import { Arrow } from "./shapes/Arrow";
 import { BaseShape } from "./shapes/BaseShape";
 import { Ellipse } from "./shapes/Ellipse";
@@ -7,7 +8,6 @@ import { Pen } from "./shapes/Pen";
 import { Rectangle } from "./shapes/Rectangle";
 import { TextShape } from "./shapes/TextShape";
 
-const DEBUG = process.env.DEBUG === "true";
 export class ShapeFactory {
     ctx: CanvasRenderingContext2D;
 
@@ -16,7 +16,7 @@ export class ShapeFactory {
     }
 
     createShapeFromPayload(payload: any): BaseShape | null {
-        if (!DEBUG) console.log("[ShapeFactory][createShapeFromPayload] payload received:", payload);
+        devLogger.info("ShapeFactory", "createShapeFromPayload", "payload received", payload);
         const { id, tempId, shape } = payload;
 
         switch (shape.type) {
@@ -33,7 +33,7 @@ export class ShapeFactory {
             case ShapeTypes.TEXT:
                 return new TextShape(id, tempId, "pending", shape.startX, shape.startY, shape.text, shape.fontSize, shape.color, shape.maxWidth, this.ctx);
             default:
-                console.log("Unknown shape received from websocket, shape:", payload);
+                devLogger.warn("ShapeFactory", "createShapeFromPayload", "Unknown shape received from websocket, shape payload", payload);
         }
 
         return null;

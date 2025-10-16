@@ -6,8 +6,8 @@ import { Line } from "./shapes/Line";
 import { Arrow } from "./shapes/Arrow";
 import { Pen } from "./shapes/Pen";
 import { TextShape } from "./shapes/TextShape";
+import { devLogger } from "../utils/logger";
 
-const DEBUG = process.env.DEBUG === "true";
 interface myJsonPayload extends JwtPayload {
     id: string
 }
@@ -35,7 +35,7 @@ export function generateTempId(): string | null {
 
         return `${clientId}-${currTimeStamp}-${shapeCounter}`;
     } catch (error) {
-        console.error("Error while generating the tempId", error);
+        devLogger.error("Helper", "generateTempId", "Error while generating the tempId", error);
         return null;
     }
 }
@@ -54,17 +54,17 @@ export function confirmStatusAndUpdateId(shapes: BaseShape[], payload: any): boo
 
         shape.setId(id);
         shape.setStatus("confirmed");
-        // console.log("After confirmation shape snapshot ->", JSON.parse(JSON.stringify(shape)));
+        // devLogger.info("Helper", "confirmStatusAndUpdateId", "After confirmation shape snapshot", JSON.parse(JSON.stringify(shape)));
 
         return true;
     } catch (error) {
-        console.log("Error while confirming the status, ", error);
+        devLogger.error("Helper", "confirmStatusAndUpdateId", "Error while confirming the status and id", error);
         return false;
     }
 }
 
 export function updateShapeWithId(shapes: BaseShape[], payload: any) {
-    if (!DEBUG) console.log("[Helper][updateShapeWithId] Received payload:", payload);
+    devLogger.info("Helper", "updateShapeWithId", "Received payload", payload);
 
     const { id, tempId } = payload;
     const { startX, startY, width, height, radiusX, radiusY, endX, endY, points, text, fontSize, maxWidth, fontFamily, color } = payload.shape;
@@ -74,7 +74,7 @@ export function updateShapeWithId(shapes: BaseShape[], payload: any) {
         s => ((String(s.getId()) === String(id)) || (tempId && String(s.getTempId()) === String(tempId)))
     );
 
-    if (!DEBUG) console.log("[Helper][updateShapeWithId] Matching shape with id/tempId:", found);
+    devLogger.info("Helper", "updateShapeWithId", "Matching shape with id/tempId", found);
 
     const shape = found ?? null;
 
