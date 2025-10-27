@@ -12,6 +12,9 @@ let buffer: Record<string, Record<string, UpdateEntry[]>> = {};
 let timer: NodeJS.Timeout | null = null;
 let flushing = false;
 
+// to fix the delete race condition where the delete arrive between the flush
+const deletedIds = new Set<string>();
+
 const batchManager = {
     enqueue(id: string, type: string, updates: any) {
         if (!buffer[type]) buffer[type] = {};
@@ -35,6 +38,12 @@ const batchManager = {
         // otherwise flush in every timer seconds
         else if (!timer) timer = setTimeout(flush, BATCH_INTERVAL);
     },
+    dequeue(id: string, type: string) {
+        if (buffer[type] && buffer[type][id]) {
+            delete buffer[type][id];
+            deletedIds.add(`${type}:${id}`);
+        }
+    }
 };
 
 async function flush() {
@@ -67,6 +76,12 @@ async function flush() {
             const ops: Promise<any>[] = [];
 
             for (const [id, updatesList] of Object.entries(shapes)) {
+                if (deletedIds.has(`${type}:${id}`)) {
+                    logger.warn("batchManager", "flush", `Skipping deleted shape ${type}:${id}`);
+                    deletedIds.delete(`${type}:${id}`);
+                    continue;
+                }
+
                 logger.info("batchManager", "flush", `Processing id: ${id}, total updates: ${updatesList.length}`);
 
                 // Remove 'type' from each update object before merging
@@ -101,22 +116,26 @@ async function flush() {
                         data: merged,
                     })
                 );
+            }
 
-                if (ops.length) {
-                    logger.info("batchManager", "flush", `DB:Executing ${ops.length} ${type} updates...`);
+            if (ops.length) {
+                logger.info("batchManager", "flush", `DB:Executing ${ops.length} ${type} updates...`);
 
-                    const results = await Promise.allSettled(ops);
-                    const success = results.filter(r => r.status === "fulfilled").length;
-                    const failed = results.filter(r => r.status === "rejected").length;
+                const results = await Promise.allSettled(ops);
+                const success = results.filter(r => r.status === "fulfilled").length;
+                const failed = results.filter(r => r.status === "rejected").length;
 
-                    logger.info("batchManager", "flush", `DB:flush complete. ✅ ${success} success, ❌ ${failed} failed`)
-                }
+                logger.info("batchManager", "flush", `DB:flush complete. ✅ ${success} success, ❌ ${failed} failed`);
             }
         }
     } catch (err) {
         logger.error("batchManager", "flush", "Error occured in flush, error", err);
     } finally {
         flushing = false;
+
+        if (Object.keys(buffer).length === 0) {
+            deletedIds.clear();
+        }
 
         // Check if new updates arrived during flush
         if (Object.keys(buffer).length > 0) {

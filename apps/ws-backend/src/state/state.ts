@@ -8,6 +8,7 @@ interface UserI {
 
 interface pendingShapeI {
     id?: string;
+    deleted?: boolean;
     ops: { type: string }[];
 }
 

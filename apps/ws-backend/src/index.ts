@@ -5,7 +5,6 @@ dotenv.config({ path: "../../.env" });
 import { validateUser } from "./utils/validate";
 import { addUser, joinRoom, leaveRoom, removeUser } from "./state/manage";
 import { handleShape } from "./services/appService";
-import { printState } from "./utils/logger";
 
 const WS_PORT = process.env.WS_PORT;
 
@@ -17,9 +16,6 @@ const wss = new WebSocketServer({ port: Number(WS_PORT) });
 
 wss.on("listening", () => {
     console.log("WS server is running on port:", WS_PORT);
-
-    // printing initial state
-    printState();
 });
 
 wss.on("connection", (ws, request) => {

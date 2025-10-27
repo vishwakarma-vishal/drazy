@@ -1,6 +1,6 @@
 import { WebSocket } from "ws";
 import { state } from "../state/state";
-import { storeInDB } from "./dbService";
+import { removeFromDB, storeInDB } from "./dbService";
 import { broadcastMessage } from "./wsService";
 import { batchManager } from "./batchManager";
 import { logger } from "../utils/logger";
@@ -43,17 +43,55 @@ const handleShape = (ws: WebSocket, parsedData: any) => {
             logger.warn("appService", "handleShape", "Update received from Unknown tempId:", tempId);
         }
     }
+
+    else if (action === "delete") {
+        // broadcast immediately
+        broadcastMessage(ws, roomId, parsedData, false);
+
+        const shapeId = id;
+
+        if (shapeId) {
+            const type = shape?.type;
+            if (!type) {
+                logger.warn("appService", "handleShape", "Missing shape type for delete, parsedData:", parsedData)
+                return;
+            }
+            batchManager.dequeue(shapeId, type);
+            removeFromDB(shapeId, shape);
+        } else if (tempId && state.pendingShapeOps.has(tempId)) {
+            // shape not confirmed, empty pending ops
+            const entry = state.pendingShapeOps.get(tempId);
+            if (entry) {
+                entry.deleted = true;
+                entry.ops = [];
+            }
+        } else {
+            logger.warn("appService", "handleShape", "Delete received from Unknown tempId:", tempId);
+        }
+    }
 }
 
 const saveInDBAndConfirm = async (ws: WebSocket, roomId: string, tempId: string, shapePayload: any) => {
     // store in db
-    const id = await storeInDB(roomId, shapePayload);
-    if (!id) return;
+    const id = await storeInDB(roomId, shapePayload, tempId);
+    if (!id) {
+        state.pendingShapeOps.delete(tempId);
+        return;
+    }
 
     // replay chached events (move, resize, delete)
     const shapeId = id;
 
     const pendingEntry = state.pendingShapeOps.get(tempId);
+
+    // Before sending confirmation
+    if (!pendingEntry || pendingEntry.deleted) {
+        logger.info("appService", "saveAndConfirmShape", "Skipping confirm — shape deleted before confirm broadcast", { tempId });
+
+        state.pendingShapeOps.delete(tempId);
+        await removeFromDB(shapeId, shapePayload);
+        return;
+    }
 
     if (pendingEntry) {
         pendingEntry.id = shapeId;
