@@ -66,7 +66,7 @@ const handleShape = (ws: WebSocket, parsedData: any) => {
                 entry.ops = [];
             }
         } else {
-            logger.warn("appService", "handleShape", "Delete received from Unknown tempId:", tempId);
+            logger.warn("appService", "handleShape", "Delete received from Unknown tempId", tempId);
         }
     }
 }

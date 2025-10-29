@@ -9,7 +9,7 @@ const broadcastMessage = (ws: WebSocket, roomId: string, payload: any, toAll: bo
         const user = state.getUser(userId);
         if (!user) return;
 
-        if ((toAll && user.ws === ws) || (!toAll && user.ws !== ws)) {
+        if (toAll || user.ws !== ws) {
             try {
                 user.ws.send(JSON.stringify(payload));
             } catch (error) {
