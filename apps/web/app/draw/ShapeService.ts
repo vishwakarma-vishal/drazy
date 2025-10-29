@@ -52,8 +52,6 @@ export const fetchShapes = async (roomId: string, ctx: CanvasRenderingContext2D)
             }
         });
 
-        devLogger.info("ShapeService", "fetchShape", "Initial shapes", response);
-
         return shapes;
     } catch (error) {
         devLogger.error("ShapeService", "fetchShape", "Something went wrong", error);

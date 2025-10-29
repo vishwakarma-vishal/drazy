@@ -80,7 +80,6 @@ export class CanvasDrawer {
     private websocketConnection() {
         this.socket.onmessage = (message) => {
             const payload = JSON.parse(message.data);
-            devLogger.info("CanvasDrawer", "websocketConnection", "Received payload", payload);
 
             const { type, action, shape } = payload;
 
@@ -101,6 +100,19 @@ export class CanvasDrawer {
             // update 
             if (type === "shape" && action === "update") {
                 updateShapeWithId(this.shapes, payload);
+            }
+
+            if (type === "shape" && action === "delete") {
+                const { id, tempId } = payload;
+                console.log(`Received, id->${id}, tempId->${tempId}`);
+
+                this.shapes = this.shapes.filter(s => {
+                    console.log(`id->${s.getId()}, tempId->${s.getTempId()}`)
+                    const idMatch = id && s.getId() === id;
+                    const tempIdMatch = tempId && s.getTempId() === tempId;
+                    console.log(`idMatch:${idMatch}, tempIdMatch:${tempIdMatch}`);
+                    return !(idMatch || tempIdMatch);
+                });
             }
 
             this.drawShapes();
@@ -128,6 +140,17 @@ export class CanvasDrawer {
 
         if (action === "update") {
             // send updates immediately
+            this.socket?.send(JSON.stringify(payload));
+        }
+
+        if (action === "delete") {
+            const deletedShape = this.selectedShape;
+            this.shapes = this.shapes.filter(s => {
+                const idMatch = deletedShape?.getId() && s.getId() === deletedShape.getId();
+                const tempIdMatch = deletedShape?.getTempId() && s.getTempId() === deletedShape.getTempId();
+                return !(idMatch || tempIdMatch); // remove only if either matches
+            });
+            this.drawShapes();
             this.socket?.send(JSON.stringify(payload));
         }
     }
@@ -262,14 +285,16 @@ export class CanvasDrawer {
             devLogger.warn("Helper", "updateShapeWithId", "user is not logged in, logging out...");
         }
 
-        const isUpdateOn = this.selectedShape !== null;
+        const action = this.selectedShape ? (this.selectedHandle === "delete" ? "delete" : "update") : "create";
+        const id = this.selectedShape ? this.selectedShape.getId() : "";
+        const tempId = this.selectedShape ? this.selectedShape.getTempId() : shapeTempId;
 
         const payload = {
             type: "shape",
             roomId: this.roomId,
-            action: isUpdateOn ? "update" : "create",
-            id: isUpdateOn ? this.selectedShape?.getId() : "",
-            tempId: isUpdateOn ? this.selectedShape?.getTempId() : shapeTempId,
+            action: action,
+            id: id,
+            tempId: tempId,
             shape: {}
         }
 
@@ -277,7 +302,7 @@ export class CanvasDrawer {
         const height = e.offsetY - this.startY;
 
         // creating payload
-        if (this.selectedShape) {
+        if (this.selectedShape && this.selectedHandle !== "delete") {
             // for update (move, resize)
             if (this.selectedShape instanceof Rectangle) {
                 payload.shape = { type: ShapeTypes.RECTANGLE, startX: this.selectedShape.startX, startY: this.selectedShape.startY, width: this.selectedShape.width, height: this.selectedShape.height, color: this.selectedShape.getColor() }
@@ -300,7 +325,7 @@ export class CanvasDrawer {
             else {
                 devLogger.warn("Helper", "updateShapeWithId", "Unknown shape selected, shape", this.selectedShape);
             }
-        } else {
+        } else if (!this.selectedShape) {
             // for new shape
             switch (this.selectedShapeType) {
                 case (ShapeTypes.RECTANGLE): {
@@ -370,6 +395,29 @@ export class CanvasDrawer {
                 default: {
                     devLogger.warn("Helper", "updateShapeWithId", "Unknow shapeType selected, selectedShapeType", this.selectedShapeType);
                 }
+            }
+        } else {
+            // delete shape
+            if (this.selectedShape instanceof Rectangle) {
+                payload.shape = { type: ShapeTypes.RECTANGLE }
+            }
+            else if (this.selectedShape instanceof Ellipse) {
+                payload.shape = { type: ShapeTypes.ELLIPSE };
+            }
+            else if (this.selectedShape instanceof Line) {
+                payload.shape = { type: ShapeTypes.LINE };
+            }
+            else if (this.selectedShape instanceof Arrow) {
+                payload.shape = { type: ShapeTypes.ARROW };
+            }
+            else if (this.selectedShape instanceof Pen) {
+                payload.shape = { type: ShapeTypes.PEN };
+            }
+            else if (this.selectedShape instanceof TextShape) {
+                payload.shape = { type: ShapeTypes.TEXT }
+            }
+            else {
+                devLogger.warn("Helper", "updateShapeWithId", "Unknown shape selected, shape", this.selectedShape);
             }
         }
 

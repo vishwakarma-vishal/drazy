@@ -25,8 +25,8 @@ export class Arrow extends BaseShape {
 
         if (this.selected) {
             this.getAllHandle().forEach(h => {
-                ctx.fillStyle = "white";
                 ctx.strokeStyle = "black";
+                ctx.fillStyle = h.name === "delete" ? "red" : "white";
                 ctx.fillRect(h.x - 4, h.y - 4, 8, 8);
                 ctx.strokeRect(h.x - 4, h.y - 4, 8, 8);
             });
@@ -76,9 +76,23 @@ export class Arrow extends BaseShape {
     getAllHandle() {
         const { startX, startY, endX, endY } = this;
 
+        let deleteX, deleteY;
+        const offset = 10;
+
+        // to get the top-right delete handle cordinates
+        if (endX > startX || (endX === startX && endY < startY)) {
+            // end point is the right/top one
+            deleteX = endX + offset;
+            deleteY = endY - offset;
+        } else {
+            deleteX = startX + offset;
+            deleteY = startY - offset;
+        }
+
         return [
             { name: "start", x: startX, y: startY },
-            { name: "end", x: endX, y: endY }
+            { name: "end", x: endX, y: endY },
+            { name: "delete", x: deleteX, y: deleteY }
         ]
     }
 

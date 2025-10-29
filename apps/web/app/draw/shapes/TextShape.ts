@@ -119,8 +119,8 @@ export class TextShape extends BaseShape {
         // draw resize handlers only if selected
         if (this.selected) {
             this.getAllHandle().forEach(h => {
-                ctx.fillStyle = "white";
                 ctx.strokeStyle = "black";
+                ctx.fillStyle = h.name === "delete" ? "red" : "white";
                 ctx.fillRect(h.x - 4, h.y - 4, 8, 8);
                 ctx.strokeRect(h.x - 4, h.y - 4, 8, 8);
             });
@@ -152,7 +152,8 @@ export class TextShape extends BaseShape {
             { name: "right-center", x: x + maxWidth, y: y + height / 2 },
             { name: "bottom-left", x: x, y: y + height },
             { name: "bottom-center", x: x + maxWidth / 2, y: y + height },
-            { name: "bottom-right", x: x + maxWidth, y: y + height }
+            { name: "bottom-right", x: x + maxWidth, y: y + height },
+            { name: "delete", x: x + maxWidth + 10, y: y - 10 }
         ]
     }
 

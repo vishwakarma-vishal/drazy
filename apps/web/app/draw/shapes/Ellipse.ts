@@ -27,8 +27,8 @@ export class Ellipse extends BaseShape {
 
         if (this.selected) {
             this.getAllHandle().forEach(h => {
-                ctx.fillStyle = "white";
                 ctx.strokeStyle = "black";
+                ctx.fillStyle = h.name === "delete" ? "red" : "white";
                 ctx.fillRect(h.x - 4, h.y - 4, 8, 8);
                 ctx.strokeRect(h.x - 4, h.y - 4, 8, 8);
             });
@@ -65,7 +65,8 @@ export class Ellipse extends BaseShape {
             { name: "right-center", x: startX + width, y: startY + height / 2 },
             { name: "bottom-left", x: startX, y: startY + height },
             { name: "bottom-center", x: startX + width / 2, y: startY + height },
-            { name: "bottom-right", x: startX + width, y: startY + height }
+            { name: "bottom-right", x: startX + width, y: startY + height },
+            { name: "delete", x: startX + width + 10, y: startY - 10 }
         ]
     }
 
