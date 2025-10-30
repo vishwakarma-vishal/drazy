@@ -19,7 +19,7 @@ model Room {
   id      String @id @default(uuid())
   slug    String
   adminId String
-  admin   User   @relation(fields: [adminId], references: [id])
+  admin   User   @relation(fields: [adminId], references: [id], onDelete: Cascade)
   Chats   Chat[]
 }
 
@@ -29,7 +29,7 @@ model Chat {
   shapeId   String
   createdAt DateTime @default(now())
 
-  room      Room       @relation(fields: [roomId], references: [id])
+  room      Room       @relation(fields: [roomId], references: [id], onDelete: Cascade)
   rectangle Rectangle?
   ellipse   Ellipse?
   line      Line?
@@ -40,7 +40,7 @@ model Chat {
 
 model Rectangle {
   id     String @id @default(uuid())
-  chat   Chat   @relation(fields: [id], references: [id])
+  chat   Chat   @relation(fields: [id], references: [id], onDelete: Cascade)
   startX Int
   startY Int
   width  Int
@@ -50,7 +50,7 @@ model Rectangle {
 
 model Ellipse {
   id      String @id @default(uuid())
-  chat    Chat   @relation(fields: [id], references: [id])
+  chat    Chat   @relation(fields: [id], references: [id], onDelete: Cascade)
   startX  Int
   startY  Int
   radiusX Int
@@ -60,7 +60,7 @@ model Ellipse {
 
 model Line {
   id     String @id @default(uuid())
-  chat   Chat   @relation(fields: [id], references: [id])
+  chat   Chat   @relation(fields: [id], references: [id], onDelete: Cascade)
   startX Int
   startY Int
   endX   Int
@@ -70,7 +70,7 @@ model Line {
 
 model Arrow {
   id     String @id @default(uuid())
-  chat   Chat   @relation(fields: [id], references: [id])
+  chat   Chat   @relation(fields: [id], references: [id], onDelete: Cascade)
   startX Int
   startY Int
   endX   Int
@@ -80,7 +80,7 @@ model Arrow {
 
 model TextShape {
   id       String @id @default(uuid())
-  chat     Chat   @relation(fields: [id], references: [id])
+  chat     Chat   @relation(fields: [id], references: [id], onDelete: Cascade)
   startX   Int
   startY   Int
   text     String
@@ -91,7 +91,7 @@ model TextShape {
 
 model Stroke {
   id     String @id @default(uuid())
-  chat   Chat   @relation(fields: [id], references: [id])
+  chat   Chat   @relation(fields: [id], references: [id], onDelete: Cascade)
   points Json // e.g. [[0,0],[10,20],[20,25]]
   color  String
 }

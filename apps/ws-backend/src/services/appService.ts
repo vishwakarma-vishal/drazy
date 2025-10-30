@@ -57,7 +57,7 @@ const handleShape = (ws: WebSocket, parsedData: any) => {
                 return;
             }
             batchManager.dequeue(shapeId, type);
-            removeFromDB(shapeId, shape);
+            removeFromDB(shapeId);
         } else if (tempId && state.pendingShapeOps.has(tempId)) {
             // shape not confirmed, empty pending ops
             const entry = state.pendingShapeOps.get(tempId);
@@ -89,7 +89,7 @@ const saveInDBAndConfirm = async (ws: WebSocket, roomId: string, tempId: string,
         logger.info("appService", "saveAndConfirmShape", "Skipping confirm — shape deleted before confirm broadcast", { tempId });
 
         state.pendingShapeOps.delete(tempId);
-        await removeFromDB(shapeId, shapePayload);
+        await removeFromDB(shapeId);
         return;
     }
 

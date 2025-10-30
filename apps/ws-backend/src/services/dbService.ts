@@ -88,7 +88,7 @@ const storeInDB = async (roomId: string, shapePayload: any, tempId: string): Pro
 
         if (!latest || latest.deleted) {
             logger.info("dbService", "storeInDB", `Rolling back create — shape deleted while saving`, { tempId });
-            await removeFromDB(created.id, shapePayload);
+            await removeFromDB(created.id);
             state.pendingShapeOps.delete(tempId);
             return null;
         }
@@ -100,28 +100,8 @@ const storeInDB = async (roomId: string, shapePayload: any, tempId: string): Pro
     }
 }
 
-const removeFromDB = async (id: string, shapePayload: any): Promise<boolean> => {
-
-    const type: string = shapePayload.type;
-
+const removeFromDB = async (id: string): Promise<boolean> => {
     try {
-        const map: Record<string, any> = {
-            "RECTANGLE": client.rectangle,
-            "ELLIPSE": client.ellipse,
-            "ARROW": client.arrow,
-            "LINE": client.line,
-            "PEN": client.stroke,
-            "TEXT": client.textShape,
-        } as const;
-
-        if (typeof type !== "string" || !type.trim()) return false;
-        const executor = map[type];
-        if (!executor) {
-            logger.warn("dbService", "removeFromDB", "Unknown shape type received, shapePayload:", shapePayload)
-            return false;
-        }
-
-        await executor.delete({ where: { id } });
         await client.chat.delete({ where: { id } });
 
         return true;

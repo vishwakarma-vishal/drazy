@@ -42,6 +42,7 @@ export function generateTempId(): string | null {
 
 export function confirmStatusAndUpdateId(shapes: BaseShape[], payload: any): boolean {
     try {
+        devLogger.info("Helper", "confirmStatusAndUpdateId", "Confirm received with payload", payload);
         const { id, tempId } = payload;
 
         const found: BaseShape | undefined = shapes.find(
