@@ -279,6 +279,17 @@ export class CanvasDrawer {
     handleUp = (e: MouseEvent) => {
         if (!this.clicked) return;
 
+        // prevent broacasting message when user only clicked on empty space or on a shape to select it
+        const isSameSpot: boolean = e.offsetX === this.startX && e.offsetY === this.startY;
+        if (
+            isSameSpot &&
+            this.selectedHandle !== "delete" &&
+            this.selectedShapeType !== ShapeTypes.TEXT
+        ) {
+            this.clicked = false;
+            return;
+        }
+
         const shapeTempId = generateTempId();
         if (!shapeTempId) {
             // add logout functinality here
