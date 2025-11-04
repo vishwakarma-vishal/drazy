@@ -40,6 +40,9 @@ export class CanvasDrawer {
     // classes to modularize the drawer
     shapeFactory: ShapeFactory;
 
+    // to protect unnecessary update broadcast
+    isMoved: boolean = false;
+
 
     constructor(canvas: HTMLCanvasElement, socket: WebSocket, roomId: string, selectedShapeType: string, selectedColor: string) {
         this.canvas = canvas;
@@ -123,6 +126,8 @@ export class CanvasDrawer {
     private finalizeShape(payload: any) {
         const { action } = payload;
 
+        console.log("[BROADCAST]", payload, "Triggered broadcast!");
+
         if (action === "create") {
             // create shape object
             const newShape = this.shapeFactory.createShapeFromPayload(payload);
@@ -159,6 +164,7 @@ export class CanvasDrawer {
         this.clicked = true;
         this.startX = e.offsetX;
         this.startY = e.offsetY;
+        this.isMoved = false;
 
         // Deselect all if clicked on empty space
         this.shapes.forEach(shape => shape.setSelected(false));
@@ -222,6 +228,7 @@ export class CanvasDrawer {
             this.selectedShape.move(dx, dy);
             this.startX = e.offsetX;
             this.startY = e.offsetY;
+            this.isMoved = true;
             this.drawShapes();
             return;
         }
@@ -280,12 +287,33 @@ export class CanvasDrawer {
         if (!this.clicked) return;
 
         // prevent broacasting message when user only clicked on empty space or on a shape to select it
-        const isSameSpot: boolean = e.offsetX === this.startX && e.offsetY === this.startY;
-        if (
-            isSameSpot &&
-            this.selectedHandle !== "delete" &&
-            this.selectedShapeType !== ShapeTypes.TEXT
-        ) {
+        const dx = e.offsetX - this.startX;
+        const dy = e.offsetY - this.startY;
+        const moveThreshold = 2; // pixels
+        const isSameSpot = (dx * dx + dy * dy) <= (moveThreshold * moveThreshold);
+
+        let shouldBlock = false;
+
+        if (isSameSpot && !this.isMoved && this.selectedHandle !== "delete") {
+            if (this.selectedShapeType === ShapeTypes.TEXT) {
+                // Block only if clicking on an existing text shape (selecting it)
+                shouldBlock = Boolean(this.selectedShape);
+            } else {
+                // Block empty-space or same-spot clicks
+                shouldBlock = true;
+            }
+        }
+
+        // devLogger.info("CanvasDrawer", "handleUp", `shouldBlock=${shouldBlock}`, {
+        //     isSameSpot,
+        //     isMoved: this.isMoved,
+        //     selectedHandle: this.selectedHandle,
+        //     selectedShapeType: this.selectedShapeType,
+        //     selectedShape: !!this.selectedShape,
+        // });
+
+
+        if (shouldBlock) {
             this.clicked = false;
             return;
         }
@@ -437,6 +465,7 @@ export class CanvasDrawer {
         }
 
         this.clicked = false;
+        this.isMoved = false;
         this.selectedShape = null;
         this.selectedHandle = null;
     }

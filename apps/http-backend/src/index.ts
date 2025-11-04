@@ -17,7 +17,7 @@ if (process.env.NODE_ENV === "production" && !process.env.FRONTEND_URL) {
 const FRONTEND_URL = process.env.NODE_ENV === "production" ? process.env.FRONTEND_URL! : `http://localhost:3002`;
 
 app.use(cors({
-    origin: [FRONTEND_URL],
+    origin: [FRONTEND_URL, `http://localhost:3003`],
     credentials: true
 }))
 
