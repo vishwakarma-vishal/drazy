@@ -4,13 +4,14 @@ import { ShapeFactory } from "./ShapeFactory";
 import { BaseShape } from "./shapes/BaseShape";
 import { TextShape } from "./shapes/TextShape";
 import { createTextInput } from "./TextInputHelper";
-import { confirmStatusAndUpdateId, generateTempId, updateShapeWithId } from "./Helper";
 import { Rectangle } from "./shapes/Rectangle";
 import { Ellipse } from "./shapes/Ellipse";
 import { Line } from "./shapes/Line";
 import { Arrow } from "./shapes/Arrow";
 import { Pen } from "./shapes/Pen";
 import { devLogger } from "../utils/logger";
+import { confirmStatusAndUpdateId, updateShapeWithId } from "./SyncUpdate";
+import { generateTempId } from "./Utils";
 
 export class CanvasDrawer {
     canvas: HTMLCanvasElement;
@@ -125,8 +126,6 @@ export class CanvasDrawer {
     // helper- create shape payload add it into the shapes and send it via websocket
     private finalizeShape(payload: any) {
         const { action } = payload;
-
-        console.log("[BROADCAST]", payload, "Triggered broadcast!");
 
         if (action === "create") {
             // create shape object
