@@ -8,7 +8,12 @@ export class Pen extends BaseShape {
 
     constructor(id: string = "", tempId: string, status: string, points: { x: number, y: number }[], color: string) {
         super(color, id, tempId, status);
-        this.points = points;
+
+        if (typeof points === "string") {
+            try { points = JSON.parse(points); } catch { points = []; }
+        }
+
+        this.points = Array.isArray(points) ? points : [];
     }
 
     draw(ctx: CanvasRenderingContext2D): void {
