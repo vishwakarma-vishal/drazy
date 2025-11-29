@@ -30,6 +30,26 @@ export const Canvas = ({ socket, roomId }: { socket: WebSocket, roomId: string }
         }
     }, [selectedColor, selectedShapeType]);
 
+    // for dynamic window size
+    useEffect(() => {
+        const drawer = drawerRef.current;
+        const canvas = canvasRef.current;
+        if (!drawer || !canvas) return;
+
+        const handleResize = () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            drawer.drawShapes();
+        }
+
+        handleResize();
+        window.addEventListener("resize", handleResize);
+
+        return () => {
+            window.removeEventListener("resize", handleResize);
+        }
+    }, []);
+
     return (
         <div className="relative">
             <canvas
