@@ -12,6 +12,7 @@ import { Pen } from "./shapes/Pen";
 import { devLogger } from "../utils/logger";
 import { confirmStatusAndUpdateId, updateShapeWithId } from "./SyncUpdate";
 import { generateTempId } from "./Utils";
+import { Camera } from "./Camera";
 
 export class CanvasDrawer {
     canvas: HTMLCanvasElement;
@@ -44,6 +45,9 @@ export class CanvasDrawer {
     // to protect unnecessary update broadcast
     isMoved: boolean = false;
 
+    // to add infinite canvas
+    camera: Camera;
+
 
     constructor(canvas: HTMLCanvasElement, socket: WebSocket, roomId: string, selectedShapeType: string, selectedColor: string) {
         this.canvas = canvas;
@@ -61,17 +65,25 @@ export class CanvasDrawer {
         this.websocketConnection();
 
         this.shapeFactory = new ShapeFactory(this.ctx);
+        this.camera = new Camera();
     }
 
     // render shapes on the canvas
     private drawShapes() {
         // clear the canvas
+        this.ctx.save();
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.restore();
 
         // draw all the content again
+        this.ctx.save();
+        this.camera.apply(this.ctx);
+
         this.shapes.forEach((shape) => {
             shape.draw(this.ctx);
         });
+        this.ctx.restore();
     }
 
     // get roomshape form the BE and render then on canvas
@@ -159,10 +171,19 @@ export class CanvasDrawer {
         }
     }
 
+    private handleWheel = (e: WheelEvent) => {
+        e.preventDefault();
+        this.camera.x -= e.deltaX;
+        this.camera.y -= e.deltaY;
+
+        this.drawShapes();
+    }
+
     handleDown = (e: MouseEvent) => {
         this.clicked = true;
-        this.startX = e.offsetX;
-        this.startY = e.offsetY;
+        const p = this.camera.clientToWorld(e.clientX, e.clientY, this.canvas);
+        this.startX = p.worldX;
+        this.startY = p.worldY;
         this.isMoved = false;
 
         // Deselect all if clicked on empty space
@@ -171,15 +192,14 @@ export class CanvasDrawer {
         this.selectedHandle = null;
 
         if (this.selectedShapeType === ShapeTypes.TEXT) {
-            const rect = this.canvas.getBoundingClientRect();
-            this.dragStartX = e.clientX - rect.left;
-            this.dragStartY = e.clientY - rect.top;
+            this.dragStartX = p.worldX;
+            this.dragStartY = p.worldY;
         }
 
         // check if user click on any shape if yes mark it selected
         for (const shape of this.shapes) {
             // check handle first
-            const handle = shape.getHandleAt(e.offsetX, e.offsetY);
+            const handle = shape.getHandleAt(p.worldX, p.worldY);
             if (handle) {
                 shape.setSelected(true);
                 this.selectedShape = shape;
@@ -189,7 +209,7 @@ export class CanvasDrawer {
             }
 
             // if not on handle, check shape body
-            if (shape.isPointerInside(e.offsetX, e.offsetY)) {
+            if (shape.isPointerInside(p.worldX, p.worldY)) {
                 shape.setSelected(true);
                 this.selectedShape = shape;
                 this.drawShapes();
@@ -210,35 +230,43 @@ export class CanvasDrawer {
     handleMove = (e: MouseEvent) => {
         if (!this.clicked) return;
 
+        const p = this.camera.clientToWorld(e.clientX, e.clientY, this.canvas);
+        const worldX = p.worldX;
+        const worldY = p.worldY;
+
         // If shape and handle selected we can resize
         if (this.selectedShape && this.selectedHandle) {
             if (this.selectedShape instanceof TextShape) {
                 this.selectedShape.setInitialStage();
             }
-            this.selectedShape.resize(this.selectedHandle, e.offsetX, e.offsetY);
+            this.selectedShape.resize(this.selectedHandle, worldX, worldY);
             this.drawShapes();
             return;
         }
 
         // If a shape is selected but no handle, we can move shape
         if (this.selectedShape && !this.selectedHandle) {
-            const dx = e.offsetX - this.startX;
-            const dy = e.offsetY - this.startY;
+            const dx = worldX - this.startX;
+            const dy = worldY - this.startY;
             this.selectedShape.move(dx, dy);
-            this.startX = e.offsetX;
-            this.startY = e.offsetY;
+            this.startX = worldX;
+            this.startY = worldY;
             this.isMoved = true;
             this.drawShapes();
             return;
         }
 
         // otherwise draw the shapes progress
-        const width = e.offsetX - this.startX;
-        const height = e.offsetY - this.startY;
+        const width = worldX - this.startX;
+        const height = worldY - this.startY;
 
         if (this.selectedShapeType !== ShapeTypes.PEN) {
             this.drawShapes();
         }
+
+        // apply camera transform before drawing previews
+        this.ctx.save();
+        this.camera.apply(this.ctx);
         this.ctx.strokeStyle = this.selectedColor;
 
         if (this.selectedShapeType === ShapeTypes.RECTANGLE) {
@@ -246,33 +274,36 @@ export class CanvasDrawer {
         }
 
         else if (this.selectedShapeType === ShapeTypes.ELLIPSE) {
-            const centerX = (e.offsetX + this.startX) / 2;
-            const centerY = (e.offsetY + this.startY) / 2;
+            const centerX = (worldX + this.startX) / 2;
+            const centerY = (worldY + this.startY) / 2;
 
             // Half the width/height gives you radii
-            const radiusX = Math.abs(e.offsetX - this.startX) / 2;
-            const radiusY = Math.abs(e.offsetY - this.startY) / 2;
+            const radiusX = Math.abs(worldX - this.startX) / 2;
+            const radiusY = Math.abs(worldY - this.startY) / 2;
 
             this.shapeFactory.ellipsePreview(centerX, centerY, radiusX, radiusY, this.selectedColor);
         }
 
         else if (this.selectedShapeType === ShapeTypes.LINE) {
-            this.shapeFactory.linePreview(this.startX, this.startY, e.offsetX, e.offsetY, this.selectedColor);
+            this.shapeFactory.linePreview(this.startX, this.startY, worldX, worldY, this.selectedColor);
         }
 
         else if (this.selectedShapeType === ShapeTypes.PEN) {
-            if (!this.drawing) return;
-            this.penPath.push({ x: e.offsetX, y: e.offsetY });
-            this.shapeFactory.penPreview(e.offsetX, e.offsetY, this.selectedColor);
+            if (!this.drawing) {
+                this.ctx.restore();
+                return;
+            }
+
+            this.penPath.push({ x: worldX, y: worldY });
+            this.shapeFactory.penPreview(worldX, worldY, this.selectedColor);
         }
 
         else if (this.selectedShapeType === ShapeTypes.ARROW) {
-            this.shapeFactory.arrowPreview(this.startX, this.startY, e.offsetX, e.offsetY, this.selectedColor);
+            this.shapeFactory.arrowPreview(this.startX, this.startY, worldX, worldY, this.selectedColor);
         }
 
         else if (this.selectedShapeType === ShapeTypes.TEXT) {
-            const rect = this.canvas.getBoundingClientRect();
-            this.dragEndX = e.clientX - rect.left;
+            this.dragEndX = worldX;
 
             // Draw temporary outline rectangle with fixed height
             const tempWidth = this.dragEndX - this.dragStartX;
@@ -280,14 +311,21 @@ export class CanvasDrawer {
 
             this.shapeFactory.textInputBoxPreview(this.dragStartX, this.dragStartY, tempWidth, tempHeight, this.selectedColor);
         }
+
+        this.ctx.restore();
     }
 
     handleUp = (e: MouseEvent) => {
         if (!this.clicked) return;
 
+        // convert client coords -> world coords
+        const p = this.camera.clientToWorld(e.clientX, e.clientY, this.canvas);
+        const worldX = p.worldX;
+        const worldY = p.worldY;
+
         // prevent broacasting message when user only clicked on empty space or on a shape to select it
-        const dx = e.offsetX - this.startX;
-        const dy = e.offsetY - this.startY;
+        const dx = worldX - this.startX;
+        const dy = worldY - this.startY;
         const moveThreshold = 2; // pixels
         const isSameSpot = (dx * dx + dy * dy) <= (moveThreshold * moveThreshold);
 
@@ -336,8 +374,8 @@ export class CanvasDrawer {
             shape: {}
         }
 
-        const width = e.offsetX - this.startX;
-        const height = e.offsetY - this.startY;
+        const width = worldX - this.startX;
+        const height = worldY - this.startY;
 
         // creating payload
         if (this.selectedShape && this.selectedHandle !== "delete") {
@@ -374,26 +412,26 @@ export class CanvasDrawer {
                 }
 
                 case (ShapeTypes.ELLIPSE): {
-                    const radiusX = Math.abs(e.offsetX - this.startX) / 2;
-                    const radiusY = Math.abs(e.offsetY - this.startY) / 2;
+                    const radiusX = Math.abs(worldX - this.startX) / 2;
+                    const radiusY = Math.abs(worldY - this.startY) / 2;
 
                     payload.shape = { type: ShapeTypes.ELLIPSE, startX: this.startX, startY: this.startY, radiusX, radiusY, color: this.selectedColor };
                     break;
                 }
 
                 case (ShapeTypes.LINE): {
-                    payload.shape = { type: ShapeTypes.LINE, startX: this.startX, startY: this.startY, endX: e.offsetX, endY: e.offsetY, color: this.selectedColor };
+                    payload.shape = { type: ShapeTypes.LINE, startX: this.startX, startY: this.startY, endX: worldX, endY: worldY, color: this.selectedColor };
                     break;
                 }
 
                 case (ShapeTypes.ARROW): {
-                    payload.shape = { type: ShapeTypes.ARROW, startX: this.startX, startY: this.startY, endX: e.offsetX, endY: e.offsetY, color: this.selectedColor };
+                    payload.shape = { type: ShapeTypes.ARROW, startX: this.startX, startY: this.startY, endX: worldX, endY: worldY, color: this.selectedColor };
                     break;
                 }
 
                 case (ShapeTypes.PEN): {
                     if (!this.drawing) return;
-                    this.penPath.push({ x: e.offsetX, y: e.offsetY });
+                    this.penPath.push({ x: worldX, y: worldY });
 
                     payload.shape = { type: ShapeTypes.PEN, points: this.penPath, color: this.selectedColor };
                     this.drawing = false;
@@ -401,8 +439,7 @@ export class CanvasDrawer {
                 }
 
                 case (ShapeTypes.TEXT): {
-                    const rect = this.canvas.getBoundingClientRect();
-                    this.dragEndX = e.clientX - rect.left;
+                    this.dragEndX = worldX;
 
                     // Determine width of the input box
                     const dragWidth = Math.abs(this.dragEndX - this.dragStartX);
@@ -410,10 +447,10 @@ export class CanvasDrawer {
                     let promise: Promise<any | null>;
                     if (dragWidth <= 2) {
                         // Click case
-                        promise = createTextInput(this.canvas, this.dragStartX, this.dragStartY, this.selectedColor);
+                        promise = createTextInput(this.canvas, this.dragStartX, this.dragStartY, this.camera, this.selectedColor);
                     } else {
                         // Drag case
-                        promise = createTextInput(this.canvas, this.dragStartX, this.dragStartY, this.selectedColor, this.dragEndX);
+                        promise = createTextInput(this.canvas, this.dragStartX, this.dragStartY, this.camera, this.selectedColor, this.dragEndX);
                     }
 
                     promise.then((shapeProp) => {
@@ -473,11 +510,13 @@ export class CanvasDrawer {
         this.canvas.addEventListener("mousedown", this.handleDown);
         this.canvas.addEventListener("mousemove", this.handleMove);
         this.canvas.addEventListener("mouseup", this.handleUp);
+        this.canvas.addEventListener("wheel", this.handleWheel, { passive: false });
     }
 
     destroy() {
         this.canvas.removeEventListener("mousedown", this.handleDown);
         this.canvas.removeEventListener("mousemove", this.handleMove);
         this.canvas.removeEventListener("mouseup", this.handleUp);
+        this.canvas.removeEventListener("wheel", this.handleWheel);
     }
 }
