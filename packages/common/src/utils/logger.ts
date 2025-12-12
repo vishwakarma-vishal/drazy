@@ -21,6 +21,8 @@ if (!DEBUG_SCOPES && !isInformed) {
     isInformed = true;
 }
 
+const isTimestampOn: boolean = process.env.IS_TIMESTAMP_ON === "true";
+
 const isScopeEnabled = (scope: string): boolean => {
     if (!DEBUG_SCOPES) {
         return false;
@@ -37,21 +39,21 @@ const log = {
         if (!isScopeEnabled(scope)) return;
         const timestamp = new Date().toISOString();
         const output = data ? JSON.stringify(data) : "";
-        console.log(`[${timestamp}][${scope}:${fileName}:${funcName}] ${message} : ${output}`);
+        console.log(`${isTimestampOn ? `[${timestamp}]` : ''}[${scope}:${fileName}:${funcName}] ${message} : ${output}`);
     },
 
     warn: (scope: string, fileName: string, funcName: string, warning: string, data?: any): void => {
         if (!isScopeEnabled(scope)) return;
         const timestamp = new Date().toISOString();
         const output = data ? JSON.stringify(data) : "";
-        console.warn(`[${timestamp}][${scope}:${fileName}:${funcName}] ${warning} : ${output}`);
+        console.warn(`${isTimestampOn ? `[${timestamp}]` : ''}[${scope}:${fileName}:${funcName}] ${warning} : ${output}`);
     },
 
     error: (scope: string, fileName: string, funcName: string, message: string, err?: any): void => {
         if (!isScopeEnabled(scope)) return;
         const timestamp = new Date().toISOString();
         const output = err ? (err instanceof Error ? err.stack : JSON.stringify(err)) : "";
-        console.error(`[${timestamp}][${scope}:${fileName}:${funcName}] ${message} : ${output}`);
+        console.error(`${isTimestampOn ? `[${timestamp}]` : ''}[${scope}:${fileName}:${funcName}] ${message} : ${output}`);
     }
 }
 
