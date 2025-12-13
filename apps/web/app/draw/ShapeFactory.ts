@@ -1,4 +1,4 @@
-import { ShapeTypes } from "../constant";
+import { ShapeTypes } from "../constants/common";
 import { devLogger } from "../utils/logger";
 import { Arrow } from "./shapes/Arrow";
 import { BaseShape } from "./shapes/BaseShape";

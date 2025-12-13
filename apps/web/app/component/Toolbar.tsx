@@ -5,7 +5,7 @@ import { FaRegCircle } from "react-icons/fa";
 import { LuMinus, LuPen } from "react-icons/lu";
 import { GoArrowUpRight } from "react-icons/go";
 import { Dispatch, SetStateAction, useEffect } from "react";
-import { ShapeTypes } from "../constant";
+import { ShapeTypes } from "../constants/common";
 import { IoText } from "react-icons/io5";
 
 interface ToolbarProps {

@@ -1,4 +1,4 @@
-import { ShapeTypes } from "../constant";
+import { ShapeTypes } from "../constants/common";
 import { fetchShapes } from "./ShapeService";
 import { ShapeFactory } from "./ShapeFactory";
 import { BaseShape } from "./shapes/BaseShape";
@@ -13,6 +13,7 @@ import { devLogger } from "../utils/logger";
 import { confirmStatusAndUpdateId, updateShapeWithId } from "./SyncUpdate";
 import { generateTempId } from "./Utils";
 import { Camera } from "./Camera";
+import { WHEEL_ZOOM_SENSITIVITY } from "../constants/zoom";
 
 export class CanvasDrawer {
     canvas: HTMLCanvasElement;
@@ -84,6 +85,10 @@ export class CanvasDrawer {
             shape.draw(this.ctx);
         });
         this.ctx.restore();
+    }
+
+    public refreshRender() {
+        this.drawShapes();
     }
 
     // get roomshape form the BE and render then on canvas
@@ -173,11 +178,31 @@ export class CanvasDrawer {
 
     private handleWheel = (e: WheelEvent) => {
         e.preventDefault();
-        this.camera.x -= e.deltaX;
-        this.camera.y -= e.deltaY;
 
-        this.drawShapes();
-    }
+        const isMod = e.ctrlKey || e.metaKey;
+
+        // moving the canvas
+        if (!isMod) {
+            this.camera.x -= e.deltaX;
+            this.camera.y -= e.deltaY;
+
+            requestAnimationFrame(() => this.drawShapes());
+            return;
+        }
+
+        const zoomSensitivity = WHEEL_ZOOM_SENSITIVITY; 
+        const delta = -e.deltaY;
+        const factor = Math.exp(delta * zoomSensitivity);
+
+        // Use actual client coords as anchor
+        const clientX = e.clientX;
+        const clientY = e.clientY;
+
+        // Perform zoom anchored at cursor
+        this.camera.zoomAround(clientX, clientY, this.canvas, factor);
+        requestAnimationFrame(() => this.drawShapes());
+    };
+
 
     handleDown = (e: MouseEvent) => {
         this.clicked = true;
