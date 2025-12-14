@@ -82,13 +82,80 @@ export class CanvasDrawer {
         this.camera.apply(this.ctx);
 
         this.shapes.forEach((shape) => {
-            shape.draw(this.ctx);
+            if (this.isShapeVisible(shape)) {
+                shape.draw(this.ctx);
+            }
         });
+
         this.ctx.restore();
     }
 
+    // for performace only render the visible area shapes, not all the shapes in world space
+    private isShapeVisible(shape: BaseShape): boolean {
+        // camera view in world cordinates
+        const VIEWPORT_PADDING = 2;
+
+        const cameraView = {
+            x: -this.camera.x / this.camera.zoom - VIEWPORT_PADDING,
+            y: -this.camera.y / this.camera.zoom - VIEWPORT_PADDING,
+            width: this.canvas.width / this.camera.zoom + VIEWPORT_PADDING * 2,
+            height: this.canvas.height / this.camera.zoom + VIEWPORT_PADDING * 2
+        };
+
+        // shape bounding box world cordinates
+        let shapeBounds = { x: 0, y: 0, width: 0, height: 0 };
+
+        // get the shape bounding box
+        if (shape instanceof Rectangle) {
+            shapeBounds = {
+                x: shape.startX,
+                y: shape.startY,
+                width: shape.width,
+                height: shape.height,
+            }
+        } else if (shape instanceof Ellipse) {
+            shapeBounds = {
+                x: shape.startX,
+                y: shape.startY,
+                width: shape.radiusX * 2,
+                height: shape.radiusY * 2,
+            }
+        } else if (shape instanceof Line || shape instanceof Arrow) {
+            const minX = Math.min(shape.startX, shape.endX);
+            const minY = Math.min(shape.startY, shape.endY);
+            const maxX = Math.max(shape.startX, shape.endX);
+            const maxY = Math.max(shape.startY, shape.endY);
+
+            const padding = 2;
+
+            shapeBounds = {
+                x: minX - padding,
+                y: minY - padding,
+                width: (maxX - minX) + padding * 2,
+                height: (maxY - minY) + padding * 2
+            };
+        } else if (shape instanceof TextShape) {
+            shapeBounds = {
+                x: shape.startX,
+                y: shape.startY,
+                width: shape.maxWidth,
+                height: shape.height,
+            };
+        } else {
+            // for stroke and other shape, in future we will add logic for stroke
+            return true;
+        }
+
+        return !(
+            shapeBounds.x + shapeBounds.width < cameraView.x ||
+            shapeBounds.x > cameraView.x + cameraView.width ||
+            shapeBounds.y + shapeBounds.height < cameraView.y ||
+            shapeBounds.y > cameraView.y + cameraView.height
+        )
+    }
+
     public refreshRender() {
-        this.drawShapes();
+        requestAnimationFrame(() => this.drawShapes());
     }
 
     // get roomshape form the BE and render then on canvas
@@ -136,7 +203,7 @@ export class CanvasDrawer {
                 });
             }
 
-            this.drawShapes();
+            this.refreshRender();
         }
     }
 
@@ -152,7 +219,7 @@ export class CanvasDrawer {
             if (newShape) {
                 // apply locally
                 this.shapes.push(newShape);
-                this.drawShapes();
+                this.refreshRender();
 
                 // send updates immediately
                 this.socket?.send(JSON.stringify(payload));
@@ -171,7 +238,7 @@ export class CanvasDrawer {
                 const tempIdMatch = deletedShape?.getTempId() && s.getTempId() === deletedShape.getTempId();
                 return !(idMatch || tempIdMatch); // remove only if either matches
             });
-            this.drawShapes();
+            this.refreshRender();
             this.socket?.send(JSON.stringify(payload));
         }
     }
@@ -186,11 +253,11 @@ export class CanvasDrawer {
             this.camera.x -= e.deltaX;
             this.camera.y -= e.deltaY;
 
-            requestAnimationFrame(() => this.drawShapes());
+            this.refreshRender();
             return;
         }
 
-        const zoomSensitivity = WHEEL_ZOOM_SENSITIVITY; 
+        const zoomSensitivity = WHEEL_ZOOM_SENSITIVITY;
         const delta = -e.deltaY;
         const factor = Math.exp(delta * zoomSensitivity);
 
@@ -200,11 +267,11 @@ export class CanvasDrawer {
 
         // Perform zoom anchored at cursor
         this.camera.zoomAround(clientX, clientY, this.canvas, factor);
-        requestAnimationFrame(() => this.drawShapes());
+        this.refreshRender();
     };
 
 
-    handleDown = (e: MouseEvent) => {
+    private handleDown = (e: MouseEvent) => {
         this.clicked = true;
         const p = this.camera.clientToWorld(e.clientX, e.clientY, this.canvas);
         this.startX = p.worldX;
@@ -229,7 +296,7 @@ export class CanvasDrawer {
                 shape.setSelected(true);
                 this.selectedShape = shape;
                 this.selectedHandle = handle;
-                this.drawShapes();
+                this.refreshRender();
                 return;
             }
 
@@ -237,7 +304,7 @@ export class CanvasDrawer {
             if (shape.isPointerInside(p.worldX, p.worldY)) {
                 shape.setSelected(true);
                 this.selectedShape = shape;
-                this.drawShapes();
+                this.refreshRender();
                 return;
             }
         }
@@ -252,7 +319,7 @@ export class CanvasDrawer {
         }
     }
 
-    handleMove = (e: MouseEvent) => {
+    private handleMove = (e: MouseEvent) => {
         if (!this.clicked) return;
 
         const p = this.camera.clientToWorld(e.clientX, e.clientY, this.canvas);
@@ -265,7 +332,7 @@ export class CanvasDrawer {
                 this.selectedShape.setInitialStage();
             }
             this.selectedShape.resize(this.selectedHandle, worldX, worldY);
-            this.drawShapes();
+            this.refreshRender();
             return;
         }
 
@@ -277,7 +344,7 @@ export class CanvasDrawer {
             this.startX = worldX;
             this.startY = worldY;
             this.isMoved = true;
-            this.drawShapes();
+            this.refreshRender();
             return;
         }
 
@@ -286,7 +353,7 @@ export class CanvasDrawer {
         const height = worldY - this.startY;
 
         if (this.selectedShapeType !== ShapeTypes.PEN) {
-            this.drawShapes();
+            this.refreshRender();
         }
 
         // apply camera transform before drawing previews
@@ -340,7 +407,7 @@ export class CanvasDrawer {
         this.ctx.restore();
     }
 
-    handleUp = (e: MouseEvent) => {
+    private handleUp = (e: MouseEvent) => {
         if (!this.clicked) return;
 
         // convert client coords -> world coords

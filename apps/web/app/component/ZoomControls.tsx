@@ -39,7 +39,7 @@ export default function ZoomControls({ drawerRef, canvasRef }: ZoomControlsProps
     const factor = nextZoom / current;
 
     drawer.camera.zoomAtCenter(factor, canvas);
-    drawer.drawShapes();
+    drawer.refreshRender();
   };
 
   const zoomOut = () => {
@@ -56,7 +56,7 @@ export default function ZoomControls({ drawerRef, canvasRef }: ZoomControlsProps
     const factor = nextZoom / current;
 
     drawer.camera.zoomAtCenter(factor, canvas);
-    drawer.drawShapes();
+    drawer.refreshRender();
   };
 
   const resetZoom = () => {
@@ -69,7 +69,7 @@ export default function ZoomControls({ drawerRef, canvasRef }: ZoomControlsProps
     const factor = nextZoom / current;
 
     drawer.camera.zoomAtCenter(factor, canvas);
-    drawer.drawShapes();
+    drawer.refreshRender();
   };
 
   return (
