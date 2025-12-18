@@ -6,7 +6,9 @@
   --font-body: Inter, sans-serif;
   --font-mono: "JetBrains Mono", monospace;
 
-  --primary: #0d9488;
+  /* --primary: #0d9488;
+  --primary-light: #13ecec;
+  --primary-contrast: #ffffff;
 
   --bg-app: #f7f8fa;
   --bg-surface: #ffffff;
@@ -14,9 +16,20 @@
   --border-default: #e2e8f0;
 
   --text-main: #0f172a;
-  --text-subtle: #64748b;
+  --text-subtle: #64748b; */
 
+  --primary: #2bb0a8;
+  --primary-hover: #23948d;
+  --primary-light: #13ecec;
   --primary-contrast: #ffffff;
+
+  --bg-app: #f7f8fa;
+  --bg-surface: #ffffff;
+
+  --border-default: #e2e8f0;
+
+  --text-main: #0f172a;
+  --text-subtle: #475569;
 
   --font-display: "Inter", sans-serif;
   --font-body: "Inter", sans-serif;
@@ -29,7 +42,8 @@
 }
 
 :root.dark {
-  --primary: #13ecec;
+  /* --primary: #13ecec;
+  --primary-contrast: #0b0f14;
 
   --bg-app: #0b0f14;
   --bg-surface: #151b23;
@@ -37,9 +51,19 @@
   --border-default: #3b4048;
 
   --text-main: #f3f4f6;
-  --text-subtle: #8b949e;
+  --text-subtle: #8b949e; */
 
+  --primary: #3dd6cc;
+  --primary-hover: "2BB0A8";
   --primary-contrast: #0b0f14;
+
+  --bg-app: #0b0f14;
+  --bg-surface: #111827;
+
+  --border-default: #1f2937;
+
+  --text-main: #e5e7eb;
+  --text-subtle: #9ca3af;
 }
 
 .grid-bg-pattern {
@@ -56,4 +80,8 @@
     linear-gradient(to bottom, #80808012 1px, transparent 1px);
   background-size: 24px 24px;
   opacity: 1;
+}
+
+html {
+  scroll-behavior: smooth;
 }

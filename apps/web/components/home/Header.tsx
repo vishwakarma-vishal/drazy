@@ -1,3 +1,4 @@
+import Link from "next/link";
 
 export default function Header() {
     return (
@@ -6,7 +7,7 @@ export default function Header() {
         >
             <div className="mx-auto flex h-16 max-w-[1024px] items-center justify-between px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center gap-4">
-                    <a className="flex items-center gap-3 text-text-main group cursor-pointer" href="#">
+                    <a href="#" className="flex items-center gap-3 text-text-main group cursor-pointer">
                         <div className="size-7 text-primary transition-transform group-hover:rotate-90 duration-500">
                             <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
                                 <path clipRule="evenodd"
@@ -26,10 +27,11 @@ export default function Header() {
                     </nav>
                     <div className="h-4 w-px bg-border hidden md:block"></div>
                     <div className="flex items-center gap-4">
-                        <a className="hidden sm:block text-sm font-bold text-text-main hover:text-primary transition-colors"
-                            href="#">Log In</a>
+                        {/* <a className="hidden sm:block text-sm font-bold text-text-main hover:text-primary transition-colors"
+                            href="#">Log In</a> */}
 
-                        <button
+                        <Link
+                            href="/auth"
                             className="flex h-9 items-center justify-center rounded border border-primary 
                                    text-sm font-bold transition-all duration-200 shadow-sm
                                    
@@ -40,7 +42,7 @@ export default function Header() {
                                    dark:bg-primary/10 dark:text-primary dark:hover:bg-primary dark:hover:text-bg-app"
                         >
                             <span className="font-mono">Get Started</span>
-                        </button>
+                        </Link>
                     </div>
                 </div>
             </div>

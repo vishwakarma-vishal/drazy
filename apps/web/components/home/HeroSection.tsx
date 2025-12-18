@@ -1,4 +1,4 @@
-
+import Link from "next/link";
 
 export default function HeroSection() {
   return (
@@ -29,7 +29,8 @@ export default function HeroSection() {
         </div>
 
         <div className="flex flex-wrap gap-4 justify-center">
-          <button
+          <Link
+            href="/auth"
             className="flex h-12 min-w-[160px] cursor-pointer items-center justify-center gap-2 rounded 
                            bg-primary px-6 text-base font-bold transition-all duration-300
                            
@@ -37,12 +38,13 @@ export default function HeroSection() {
                            text-primaryContrast hover:bg-teal-700 shadow-lg shadow-teal-900/10 hover:translate-y-[-2px]
                            
                            // Dark Mode Overrides
-                           dark:text-primaryContrast dark:hover:bg-primary/90 dark:shadow-[0_0_15px_rgba(19,236,236,0.15)]"
+                           dark:text-primaryContrast hover:bg-primary/90 dark:shadow-[0_0_15px_rgba(19,236,236,0.15)]"
           >
             <span>Start Whiteboarding</span>
             <span className="material-symbols-outlined text-lg">arrow_forward</span>
-          </button>
-          <button
+          </Link>
+          <a
+            href="#roadmap"
             className="flex h-12 min-w-[160px] cursor-pointer items-center justify-center gap-2 rounded 
                            border px-6 text-base font-bold transition-colors shadow-sm
                            
@@ -54,7 +56,7 @@ export default function HeroSection() {
           >
             <span className="material-symbols-outlined text-lg">map</span>
             <span>View Roadmap</span>
-          </button>
+          </a>
         </div>
 
         {/* Screen Mockup Container */}

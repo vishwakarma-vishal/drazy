@@ -1,4 +1,3 @@
-
 module.exports = {
   darkMode: "class",
   content: ["./app/**/*.{js,ts,jsx,tsx}", "./components/**/*.{js,ts,jsx,tsx}"],
@@ -7,6 +6,8 @@ module.exports = {
     extend: {
       colors: {
         primary: "var(--primary)",
+        primaryHover: "var(--primary-hover)",
+        primaryLight: "var(--primary-light)",
         primaryContrast: "var(--primary-contrast)",
 
         bg: {
