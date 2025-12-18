@@ -1,6 +1,10 @@
+"use client";
+import { useAuth } from "@/auth/AuthContext";
 import Link from "next/link";
 
 export default function CTASection() {
+    const { status } = useAuth();
+
     return (
         <section id="cta" className="border-t border-border bg-bg-surface py-32 text-center">
             <div className="mx-auto max-w-[1024px] px-4 flex flex-col items-center gap-10">
@@ -15,7 +19,7 @@ export default function CTASection() {
                 {/* Action Buttons */}
                 <div className="flex flex-wrap gap-4 justify-center">
                     <Link
-                        href="/auth"
+                        href={status === "authenticated" ? "/dashboard" : "/auth"}
                         className="flex h-12 min-w-[160px] cursor-pointer items-center justify-center gap-2 rounded 
                            bg-primary px-6 text-base font-bold transition-all duration-300
                            

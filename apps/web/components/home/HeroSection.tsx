@@ -1,6 +1,11 @@
+"use client";
+
+import { useAuth } from "@/auth/AuthContext";
 import Link from "next/link";
 
 export default function HeroSection() {
+  const { status } = useAuth();
+
   return (
     <section id="hero" className="mx-auto max-w-[1024px] px-4 py-24 sm:px-6 lg:px-8 lg:py-32"
     >
@@ -30,7 +35,7 @@ export default function HeroSection() {
 
         <div className="flex flex-wrap gap-4 justify-center">
           <Link
-            href="/auth"
+            href={status === "authenticated" ? "/dashboard" : "/auth"}
             className="flex h-12 min-w-[160px] cursor-pointer items-center justify-center gap-2 rounded 
                            bg-primary px-6 text-base font-bold transition-all duration-300
                            

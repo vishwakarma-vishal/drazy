@@ -36,6 +36,44 @@ const addNewRoom = async (req: extendedRequest, res: Response) => {
     }
 }
 
+const getCurrentUserRooms = async (req: extendedRequest, res: Response) => {
+    try {
+        const userId = req.userId;
+
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized"
+            });
+        }
+
+        const currentUserRooms = await client.room.findMany({
+            where: {
+                adminId: userId
+            }
+        });
+
+        if (currentUserRooms.length === 0) {
+            return res.status(200).json({
+                success: true,
+                message: "No rooms found.",
+                rooms: []
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Rooms are fetched successfully.",
+            rooms: currentUserRooms
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Internal server error."
+        });
+    }
+}
+
 const getRoomContent = async (req: extendedRequest, res: Response) => {
     try {
         const { id } = req.params;
@@ -83,6 +121,13 @@ const updateRoomName = async (req: extendedRequest, res: Response) => {
         const userId = req.userId;
         const { id } = req.params;
         const { newSlug } = req.body;
+
+        if (!newSlug) {
+            return res.status(400).json({
+                success: false,
+                message: "Missing required info."
+            })
+        }
 
         const room = await client.room.findUnique({
             where: { id }
@@ -166,4 +211,4 @@ const deleteRoom = async (req: extendedRequest, res: Response) => {
     }
 }
 
-export { addNewRoom, deleteRoom, updateRoomName, getRoomContent };
+export { addNewRoom, getCurrentUserRooms, deleteRoom, updateRoomName, getRoomContent };

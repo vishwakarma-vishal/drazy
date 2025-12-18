@@ -1,7 +1,31 @@
 {
-  "eslint.workingDirectories": [
-    {
-      "mode": "auto"
-    }
-  ]
+  // ===== Disable all IntelliSense & suggestions =====
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": false,
+    "strings": false
+  },
+  "editor.suggestOnTriggerCharacters": false,
+  "editor.acceptSuggestionOnEnter": "off",
+  "editor.tabCompletion": "off",
+  "editor.wordBasedSuggestions": false,
+  "editor.snippetSuggestions": "none",
+  "editor.parameterHints.enabled": false,
+  "editor.inlineSuggest.enabled": false,
+  "editor.suggest.showStatusBar": false,
+
+  // ===== Disable Copilot completely =====
+  "github.copilot.enable": false,
+  "github.copilot.inlineSuggest.enable": false,
+
+  // ===== Disable AI / chat inline features =====
+  "chat.inline.enabled": false,
+
+  // ===== Optional: keep editor clean =====
+  // "editor.hover.enabled": false,
+  // "editor.lightbulb.enabled": false,
+
+  // // ===== Prevent auto imports =====
+  // "typescript.suggest.autoImports": false,
+  // "javascript.suggest.autoImports": false
 }

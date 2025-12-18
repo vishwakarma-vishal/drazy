@@ -1,17 +1,28 @@
 "use client";
 
 import axios, { AxiosError } from 'axios';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { devLogger } from '../utils/logger';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/auth/AuthContext';
 
 export default function Auth() {
+    const { status, login } = useAuth();
     const router = useRouter();
 
     const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
     const [showPassword, setShowPassword] = useState(false);
     const emailRef = React.useRef<HTMLInputElement>(null);
     const passwordRef = React.useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (status === "authenticated") {
+            router.replace("/dashboard");
+        }
+    }, [status, router]);
+
+    if (status === "loading") return null;
+    if (status === "authenticated") return null;
 
     const signupHandler = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -30,18 +41,20 @@ export default function Auth() {
 
             if (success) {
                 const token = data.token;
-                localStorage.setItem("token", token);
+                login(token);
                 devLogger.info("auth", "SignUp", "Signed up Successfully with token", token);
                 router.replace("/dashboard");
             }
         } catch (error) {
-            if (error instanceof AxiosError && error.status == 400) {
-                alert(error.response?.data.message);
+            if (error instanceof AxiosError) {
+                if (error.response?.status == 400) {
+                    alert(error.response?.data.message);
 
-                devLogger.error("auth", "SignUp", error.response?.data.message || "", error);
+                    devLogger.error("auth", "SignUp", error.response?.data.message || "", error);
+                }
+
+                devLogger.error("auth", "SignUp", "Something went wrong", error);
             }
-
-            devLogger.error("auth", "SignUp", "Something went wrong", error);
         }
     }
 
@@ -61,7 +74,7 @@ export default function Auth() {
 
             if (success) {
                 const token = data.token;
-                localStorage.setItem("token", token);
+                login(token);
                 devLogger.info("auth", "SignIn", "Sign in successful, with token", token);
                 router.replace("/dashboard");
             }

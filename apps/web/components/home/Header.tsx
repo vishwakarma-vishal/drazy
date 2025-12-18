@@ -1,6 +1,12 @@
+"use client";
+
+import { useAuth } from "@/auth/AuthContext";
 import Link from "next/link";
 
 export default function Header() {
+    const { status } = useAuth();
+    const isAuth = status === "authenticated";
+
     return (
         <header
             className="sticky top-0 z-50 w-full border-b border-border bg-bg-app/90 dark:bg-bg-app/95 backdrop-blur-md"
@@ -27,11 +33,8 @@ export default function Header() {
                     </nav>
                     <div className="h-4 w-px bg-border hidden md:block"></div>
                     <div className="flex items-center gap-4">
-                        {/* <a className="hidden sm:block text-sm font-bold text-text-main hover:text-primary transition-colors"
-                            href="#">Log In</a> */}
-
                         <Link
-                            href="/auth"
+                            href={isAuth ? "/dashboard" : "/auth"}
                             className="flex h-9 items-center justify-center rounded border border-primary 
                                    text-sm font-bold transition-all duration-200 shadow-sm
                                    
@@ -41,7 +44,9 @@ export default function Header() {
                                    // Dark Mode 
                                    dark:bg-primary/10 dark:text-primary dark:hover:bg-primary dark:hover:text-bg-app"
                         >
-                            <span className="font-mono">Get Started</span>
+                            <span className="font-mono">
+                                {isAuth ? "Dashboard" : "Get Started"}
+                            </span>
                         </Link>
                     </div>
                 </div>
