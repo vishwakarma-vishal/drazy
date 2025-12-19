@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { extendedRequest } from "../middleware/auth.js";
-import { client } from "@repo/db";
+import { client, Prisma } from "@repo/db";
 import { logger } from "../utils/logger.js";
 
 const addNewRoom = async (req: extendedRequest, res: Response) => {
@@ -29,6 +29,15 @@ const addNewRoom = async (req: extendedRequest, res: Response) => {
             roomId: createdRoom.id
         });
     } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            if (error.code === 'P2002') {
+                return res.status(409).json({
+                    success: false,
+                    message: "You already have a room with this name."
+                });
+            }
+        }
+
         res.status(500).json({
             success: false,
             message: "Internal server error."

@@ -21,6 +21,8 @@ model Room {
   adminId String
   admin   User   @relation(fields: [adminId], references: [id], onDelete: Cascade)
   Chats   Chat[]
+ 
+  @@unique([slug, adminId])
 }
 
 model Chat {

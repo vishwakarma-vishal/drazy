@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { devLogger } from "../utils/logger";
+import { toast } from "../utils/toast";
+import { AxiosError } from "axios";
 
 export default function Dashboard() {
     const { status, logout } = useAuth();
@@ -22,6 +24,10 @@ export default function Dashboard() {
     const [renameRoomName, setRenameRoomName] = useState("");
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [roomToDelete, setRoomToDelete] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+
+    const [oldRoomName, setOldRoomName] = useState<string | null>(null); // to prevent unnecessary api call to update endpoint
+    const [error, setError] = useState<string | null>(null);
 
     const fetchUserRooms = async () => {
         try {
@@ -44,6 +50,7 @@ export default function Dashboard() {
         );
     }, [rooms, searchQuery]);
 
+    // unauthorized check
     useEffect(() => {
         if (status === "unauthenticated") router.replace("/auth");
     }, [status, router]);
@@ -52,38 +59,78 @@ export default function Dashboard() {
 
     const addNewRoom = async () => {
         if (!createRoomName.trim()) return;
+        if (createRoomName.trim().length < 3) {
+            setError("Canvas name must be 3 char long");
+            return;
+        }
+        setIsLoading(true);
+
         try {
             const response = await http.post("/room", { slug: createRoomName });
             if (response.data.success) {
                 setRooms(prev => [...prev, { slug: response.data.slug, id: response.data.roomId }]);
                 setCreateRoomName("");
+                toast.success("Canvas created successfully!");
+                setIsCreateOpen(false);
             }
-        } finally { setIsCreateOpen(false); }
+        } catch (error) {
+            if (error instanceof AxiosError) {
+                if (error.response?.status == 409) {
+                    toast.warn(error.response?.data.message || "Canvas already exist");
+                    return;
+                }
+            }
+            toast.error("Something went wrong. Try again later.");
+        }
+
+        finally {
+            setIsLoading(false);
+            setSearchQuery("");
+        }
     }
 
-    const updateRoomName = async (e: FormEvent) => {
+    const updateRoomName = async () => {
         if (!renameRoomName.trim() || !activeRoomId) return;
+
+        if (oldRoomName === renameRoomName.trim()) {
+            setError("Change room name to update");
+            return;
+        }
+
+        setIsLoading(true);
         try {
             const response = await http.put(`/room/${activeRoomId}`, { newSlug: renameRoomName });
             if (response.data.success) {
                 setRooms(prev => prev.map(r => r.id === activeRoomId ? { ...r, slug: renameRoomName } : r));
+                toast.success("Canvas name updated");
             }
+        } catch (error) {
+            toast.error("Something went wrong. Try again later.");
         } finally {
             setIsRenameOpen(false);
             setActiveRoomId(null);
+            setIsLoading(false);
+            setSearchQuery("");
         }
     }
 
     const deleteRoom = async () => {
         if (!roomToDelete) return;
+        setIsLoading(true);
         try {
             const response = await http.delete(`/room/${roomToDelete}`);
             if (response.data.success) {
                 setRooms(prev => prev.filter(r => r.id !== roomToDelete));
+                toast.success("Canvas deleted.");
             }
-        } finally {
+        } catch (err) {
+            toast.error("Something went wrong. Try again later.");
+        }
+        finally {
             setIsDeleteOpen(false);
             setRoomToDelete(null);
+            setIsLoading(false);
+            setSearchQuery("");
         }
     }
 
@@ -101,7 +148,7 @@ export default function Dashboard() {
                             <h2 className="hidden font-display text-lg font-bold tracking-tight sm:block">DRAZY</h2>
                         </Link>
 
-                        {/* Search visible on mobile */}
+                        {/* search bar */}
                         <div className="relative flex-1 max-w-md">
                             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-subtle text-sm">search</span>
                             <input
@@ -113,7 +160,7 @@ export default function Dashboard() {
                             />
                         </div>
 
-                        <button onClick={() => logout()} className="shrink-0 flex h-9 items-center justify-center rounded border border-primary bg-primary px-3 md:px-4 text-xs md:text-sm font-bold text-primaryContrast hover:bg-teal-700 dark:bg-primary/10 dark:text-primary transition-all shadow-sm">
+                        <button onClick={() => logout()} className="shrink-0 flex h-9 items-center justify-center rounded border border-primary bg-primary px-3 md:px-4 text-xs md:text-sm font-bold text-primaryContrast hover:bg-teal-700 dark:bg-primary/10 dark:text-primary transition-all shadow-sm cursor-pointer">
                             <span className="font-mono">LOGOUT</span>
                         </button>
                     </div>
@@ -124,10 +171,14 @@ export default function Dashboard() {
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                             <h2 className="font-display text-2xl font-bold tracking-tight">My Canvas</h2>
                             <div className="flex items-center gap-2">
-                                <button onClick={() => setViewMode('grid')} className={`flex size-8 items-center justify-center rounded-lg border border-border transition-colors ${viewMode === 'grid' ? 'bg-bg-app text-primary' : 'bg-bg-surface text-text-subtle'}`}>
+                                <button
+                                    onClick={() => setViewMode('grid')}
+                                    className={`cursor-pointer flex size-8 items-center justify-center rounded-lg border border-border transition-colors ${viewMode === 'grid' ? 'bg-bg-app text-primary' : 'bg-bg-surface text-text-subtle'}`}>
                                     <span className="material-symbols-outlined text-[18px]">view_module</span>
                                 </button>
-                                <button onClick={() => setViewMode('list')} className={`flex size-8 items-center justify-center rounded-lg border border-border transition-colors ${viewMode === 'list' ? 'bg-bg-app text-primary' : 'bg-bg-surface text-text-subtle'}`}>
+                                <button
+                                    onClick={() => setViewMode('list')}
+                                    className={`cursor-pointer flex size-8 items-center justify-center rounded-lg border border-border transition-colors ${viewMode === 'list' ? 'bg-bg-app text-primary' : 'bg-bg-surface text-text-subtle'}`}>
                                     <span className="material-symbols-outlined text-[18px]">view_list</span>
                                 </button>
                             </div>
@@ -143,7 +194,9 @@ export default function Dashboard() {
 
                         {viewMode === 'grid' ? (
                             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                                <button onClick={() => setIsCreateOpen(true)} className="group flex h-64 flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed border-border p-6 text-center transition-all hover:border-primary hover:bg-primary/5">
+                                <button
+                                    onClick={() => setIsCreateOpen(true)}
+                                    className="cursor-pointer group flex h-64 flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed border-border p-6 text-center transition-all hover:border-primary hover:bg-primary/5">
                                     <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 transition-transform group-hover:scale-110">
                                         <span className="material-symbols-outlined text-primary" style={{ fontSize: '32px' }}>add</span>
                                     </div>
@@ -151,9 +204,13 @@ export default function Dashboard() {
                                 </button>
 
                                 {filteredRooms.map((room) => (
-                                    <div key={room.id} className="group relative flex h-64 flex-col overflow-hidden rounded-2xl border border-border bg-bg-surface transition-all duration-300 hover:border-primary/40 hover:shadow-dynamic-primary">
+                                    <div
+                                        key={room.id}
+                                        className="group relative flex h-64 flex-col overflow-hidden rounded-2xl border border-border bg-bg-surface transition-all duration-300 hover:border-primary/40 hover:shadow-dynamic-primary">
                                         {/* Canvas Link */}
-                                        <Link href={`/room/${room.id}/${room.slug}`} className="relative flex flex-1 items-center justify-center bg-bg-app overflow-hidden cursor-pointer">
+                                        <Link
+                                            href={`/room/${room.id}/${room.slug}`}
+                                            className="relative flex flex-1 items-center justify-center bg-bg-app overflow-hidden cursor-pointer">
                                             <div className="grid-bg-pattern absolute inset-0 opacity-10" />
                                             <div className="size-20 rounded-xl border border-border bg-bg-surface shadow-sm rotate-3 group-hover:rotate-0 group-hover:scale-110 transition-transform duration-500" />
                                         </Link>
@@ -161,22 +218,47 @@ export default function Dashboard() {
                                         <div className="flex h-20 items-center justify-between p-4 border-t border-border bg-bg-surface">
                                             <div className="min-w-0">
                                                 <h3 className="truncate text-sm font-bold tracking-tight text-text-main group-hover:text-primary transition-colors">{room.slug}</h3>
-                                                <p className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-text-subtle">{room.owner === 'me' ? 'Personal' : 'Shared'}</p>
+                                                {/* placeholder for sharing (will update later) */}
+                                                <p className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-text-subtle">
+                                                    {room.owner === 'me' ? 'Personal' : 'Shared'}
+                                                </p>
                                             </div>
-                                            <button onClick={(e) => { e.stopPropagation(); setShowMenuFor(showMenuFor === room.id ? null : room.id); }} className={`flex size-8 items-center justify-center rounded-lg transition-all ${showMenuFor === room.id ? 'bg-primary text-primaryContrast' : 'hover:bg-bg-app text-text-subtle hover:text-text-main'}`}>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setShowMenuFor(showMenuFor === room.id ? null : room.id);
+                                                }}
+                                                className={`cursor-pointer flex size-8 items-center justify-center rounded-lg transition-all ${showMenuFor === room.id ? 'bg-primary text-primaryContrast' : 'hover:bg-bg-app text-text-subtle hover:text-text-main'}`}>
                                                 <span className="material-symbols-outlined text-lg">more_vert</span>
                                             </button>
                                         </div>
 
+                                        {/* canvas action menu */}
                                         {showMenuFor === room.id && (
                                             <>
-                                                <div className="fixed inset-0 z-40" onClick={() => setShowMenuFor(null)} />
+                                                <div
+                                                    className="fixed inset-0 z-40"
+                                                    onClick={() => setShowMenuFor(null)} />
                                                 <div className="absolute right-3 bottom-16 z-50 w-40 rounded-xl border border-border bg-bg-surface p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100">
-                                                    <button onClick={() => { setActiveRoomId(room.id); setRenameRoomName(room.slug); setIsRenameOpen(true); setShowMenuFor(null); }} className="flex w-full items-center gap-2 rounded-lg p-1 text-left text-xs font-semibold hover:bg-bg-app transition-colors">
+                                                    <button
+                                                        onClick={() => {
+                                                            setActiveRoomId(room.id);
+                                                            setRenameRoomName(room.slug);
+                                                            setOldRoomName(room.slug);
+                                                            setIsRenameOpen(true);
+                                                            setShowMenuFor(null);
+                                                        }}
+                                                        className="cursor-pointer flex w-full items-center gap-2 rounded-lg p-1 text-left text-xs font-semibold hover:bg-bg-app transition-colors">
                                                         <span className="material-symbols-outlined text-sm">edit</span> Rename
                                                     </button>
                                                     <div className="my-1 h-px bg-border" />
-                                                    <button onClick={() => { setRoomToDelete(room.id); setIsDeleteOpen(true); setShowMenuFor(null); }} className="flex w-full items-center gap-2 rounded-lg p-1 text-left text-xs font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors">
+                                                    <button
+                                                        onClick={() => {
+                                                            setRoomToDelete(room.id);
+                                                            setIsDeleteOpen(true);
+                                                            setShowMenuFor(null);
+                                                        }}
+                                                        className="cursor-pointer flex w-full items-center gap-2 rounded-lg p-1 text-left text-xs font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors">
                                                         <span className="material-symbols-outlined text-sm">delete</span> Delete
                                                     </button>
                                                 </div>
@@ -187,7 +269,9 @@ export default function Dashboard() {
                             </div>
                         ) : (
                             <div className="flex flex-col rounded-2xl border border-border bg-bg-surface shadow-sm overflow-visible pb-24">
-                                <button onClick={() => setIsCreateOpen(true)} className="group flex flex-col items-center justify-center gap-4 border-b border-dashed border-border p-6 hover:bg-primary/5 transition-all">
+                                <button
+                                    onClick={() => setIsCreateOpen(true)}
+                                    className="cursor-pointer group flex flex-col items-center justify-center gap-4 border-b border-dashed border-border p-6 hover:bg-primary/5 transition-all">
                                     <div className="flex size-8 items-center justify-center rounded-full bg-primary/10 group-hover:scale-110 transition-transform">
                                         <span className="material-symbols-outlined text-primary">add</span>
                                     </div>
@@ -195,15 +279,22 @@ export default function Dashboard() {
                                 </button>
 
                                 {filteredRooms.map((room) => (
-                                    <div key={room.id} className="group relative flex items-center justify-between border-b border-border p-4 transition-all last:border-none hover:bg-bg-app/50">
-                                        <Link href={`/room/${room.id}/${room.slug}`} className="flex items-center gap-4 min-w-0 flex-1 cursor-pointer">
+                                    <div
+                                        key={room.id}
+                                        className="group relative flex items-center justify-between border-b border-border p-4 transition-all last:border-none hover:bg-bg-app/50">
+                                        <Link
+                                            href={`/room/${room.id}/${room.slug}`}
+                                            className="flex items-center gap-4 min-w-0 flex-1 cursor-pointer">
                                             <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border bg-bg-app text-primary transition-transform group-hover:scale-105">
                                                 <span className="material-symbols-outlined text-[22px]">description</span>
                                             </div>
                                             <div className="min-w-0">
                                                 <h3 className="truncate text-sm font-bold text-text-main group-hover:text-primary transition-colors">{room.slug}</h3>
+                                                {/* placeholder ownership and last edited time */}
                                                 <p className="flex items-center gap-1.5 text-xs text-text-subtle">
-                                                    <span className="font-medium text-primary/80">{room.owner === 'me' ? 'Owned by you' : 'Shared'}</span>
+                                                    <span className="font-medium text-primary/80">
+                                                        {room.owner === 'me' ? 'Owned by you' : 'Shared'}
+                                                    </span>
                                                     <span className="size-1 rounded-full bg-border" />
                                                     <span>Last edited 2h ago</span>
                                                 </p>
@@ -211,18 +302,38 @@ export default function Dashboard() {
                                         </Link>
 
                                         <div className="relative">
-                                            <button onClick={(e) => { e.stopPropagation(); setShowMenuFor(showMenuFor === room.id ? null : room.id); }} className={`flex size-9 items-center justify-center rounded-lg transition-all ${showMenuFor === room.id ? 'bg-primary text-primaryContrast' : 'text-text-subtle hover:bg-border/50'}`}>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setShowMenuFor(showMenuFor === room.id ? null : room.id);
+                                                }}
+                                                className={`cursor-pointer flex size-9 items-center justify-center rounded-lg transition-all ${showMenuFor === room.id ? 'bg-primary text-primaryContrast' : 'text-text-subtle hover:bg-border/50'}`}>
                                                 <span className="material-symbols-outlined">more_horiz</span>
                                             </button>
+
+                                            {/* menu */}
                                             {showMenuFor === room.id && (
                                                 <>
                                                     <div className="fixed inset-0 z-40" onClick={() => setShowMenuFor(null)} />
-                                                    {/* Fix: Changed top-full to bottom-full for consistency in scrollable areas */}
                                                     <div className="absolute right-0 bottom-full mb-1 z-50 w-40 rounded-xl border border-border bg-bg-surface p-1.5 shadow-xl animate-in fade-in slide-in-from-bottom-1 duration-150">
-                                                        <button onClick={() => { setActiveRoomId(room.id); setRenameRoomName(room.slug); setIsRenameOpen(true); setShowMenuFor(null); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-semibold hover:bg-bg-app transition-colors">
+                                                        <button
+                                                            onClick={() => {
+                                                                setActiveRoomId(room.id);
+                                                                setRenameRoomName(room.slug);
+                                                                setOldRoomName(room.slug);
+                                                                setIsRenameOpen(true);
+                                                                setShowMenuFor(null);
+                                                            }}
+                                                            className="cursor-pointer flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-semibold hover:bg-bg-app transition-colors">
                                                             <span className="material-symbols-outlined text-sm">edit</span> Rename
                                                         </button>
-                                                        <button onClick={() => { setRoomToDelete(room.id); setIsDeleteOpen(true); setShowMenuFor(null); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-semibold text-red-500 hover:bg-red-50 transition-colors">
+                                                        <button
+                                                            onClick={() => {
+                                                                setRoomToDelete(room.id);
+                                                                setIsDeleteOpen(true);
+                                                                setShowMenuFor(null);
+                                                            }}
+                                                            className="cursor-pointer flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-semibold text-red-500 hover:bg-red-50 transition-colors">
                                                             <span className="material-symbols-outlined text-sm">delete</span> Delete
                                                         </button>
                                                     </div>
@@ -237,25 +348,66 @@ export default function Dashboard() {
                 </div>
             </main>
 
-            {/* Modals remain the same... */}
+            {/* add room modal */}
             {isCreateOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsCreateOpen(false)} />
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        onClick={() => setIsCreateOpen(false)} />
                     <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-border bg-bg-surface p-6 shadow-dynamic-primary animate-in fade-in zoom-in duration-200">
                         <h3 className="font-display text-xl font-bold tracking-tight text-text-main">Create New Canvas</h3>
-                        <p className="mt-1 text-sm text-text-subtle">Give your masterpiece a name to get started.</p>
+                        <p className="mt-1 text-sm text-text-subtle">
+                            Give your masterpiece a name to get started.
+                        </p>
                         <div className="mt-6">
                             <label className="text-[10px] font-bold uppercase tracking-widest text-text-subtle ml-1">Canvas Name</label>
-                            <input autoFocus value={createRoomName} onChange={(e) => setCreateRoomName(e.target.value)} placeholder="e.g. Architecture Diagram" className="mt-1.5 h-11 w-full rounded-lg border border-border bg-bg-app px-4 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                            <input
+                                autoFocus
+                                value={createRoomName}
+                                onChange={(e) => {
+                                    setCreateRoomName(e.target.value)
+                                    setError(null);
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') addNewRoom();
+                                    if (e.key === 'Escape') setIsCreateOpen(false);
+                                }}
+                                placeholder="e.g. Architecture Diagram"
+                                className="mt-1.5 h-11 w-full rounded-lg border border-border bg-bg-app px-4 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+
+                            {/* error message */}
+                            {error && (
+                                <div className="mt-2 flex items-center gap-2 text-red-500 animate-in fade-in slide-in-from-top-1">
+                                    <span className="material-symbols-outlined">error</span>
+                                    <span className="text-xs font-normal">{error}</span>
+                                </div>
+                            )}
                         </div>
                         <div className="mt-8 flex items-center justify-end gap-3">
-                            <button onClick={() => setIsCreateOpen(false)} className="h-10 px-4 text-sm font-semibold text-text-subtle">Cancel</button>
-                            <button onClick={addNewRoom} className="flex h-10 items-center justify-center rounded-lg bg-primary px-6 text-sm font-bold text-primaryContrast shadow-sm hover:brightness-110 active:scale-95 transition-all">Create Canvas</button>
+                            <button
+                                onClick={() => setIsCreateOpen(false)}
+                                disabled={isLoading}
+                                className="h-10 px-4 text-sm font-semibold text-text-subtle cursor-pointer disabled:cursor-not-allowed disabled:opacity-70">
+                                Cancel
+                            </button>
+                            <button
+                                onClick={addNewRoom}
+                                disabled={isLoading}
+                                className="flex h-10 items-center justify-center rounded-lg bg-primary px-6 text-sm font-bold text-primaryContrast shadow-sm hover:brightness-110 active:scale-95 transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-70">
+                                {isLoading ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="size-4 animate-spin rounded-full border-2 border-bg-app/30 border-t-bg-app" />
+                                        <span>Creating canvas...</span>
+                                    </div>
+                                ) : (
+                                    <span>Create Canvas</span>
+                                )}
+                            </button>
                         </div>
                     </div>
                 </div>
             )}
 
+            {/* update room name modal */}
             {isRenameOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsRenameOpen(false)} />
@@ -266,26 +418,85 @@ export default function Dashboard() {
                         </div>
                         <div className="mt-6">
                             <label className="text-[10px] font-bold uppercase tracking-widest text-text-subtle ml-1">New Title</label>
-                            <input autoFocus value={renameRoomName} onChange={(e) => setRenameRoomName(e.target.value)} className="mt-1.5 h-11 w-full rounded-lg border border-border bg-bg-app px-4 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                            <input
+                                autoFocus
+                                value={renameRoomName}
+                                onChange={(e) => {
+                                    setError(null);
+                                    setRenameRoomName(e.target.value)
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') updateRoomName();
+                                    if (e.key === 'Escape') setIsRenameOpen(false);
+                                }}
+                                className="mt-1.5 h-11 w-full rounded-lg border border-border bg-bg-app px-4 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+
+                            {/* error message */}
+                            {error && (
+                                <div className="mt-2 flex items-center gap-2 text-red-500 animate-in fade-in slide-in-from-top-1">
+                                    <span className="material-symbols-outlined">error</span>
+                                    <span className="text-xs font-normal">{error}</span>
+                                </div>
+                            )}
                         </div>
-                        <div className="mt-8 flex items-center justify-end gap-3">
-                            <button onClick={() => setIsRenameOpen(false)} className="h-10 px-4 text-sm font-semibold text-text-subtle">Cancel</button>
-                            <button onClick={updateRoomName} className="flex h-10 items-center justify-center rounded-lg bg-primary px-6 text-sm font-bold text-primaryContrast shadow-sm hover:brightness-110 transition-all">Save Changes</button>
+
+                        <div className="mt-6 flex items-center justify-end gap-3">
+                            <button
+                                disabled={isLoading}
+                                onClick={() => setIsRenameOpen(false)}
+                                className="h-10 px-4 text-sm font-semibold text-text-subtle cursor-pointer disabled:cursor-not-allowed disabled:opacity-70">
+                                Cancel
+                            </button>
+                            <button
+                                disabled={isLoading}
+                                onClick={updateRoomName}
+                                className="flex h-10 items-center justify-center rounded-lg bg-primary px-6 text-sm font-bold text-primaryContrast shadow-sm hover:brightness-110 transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-70">
+                                {isLoading ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="size-4 animate-spin rounded-full border-2 border-bg-app/30 border-t-bg-app" />
+                                        <span>Updating name...</span>
+                                    </div>
+                                ) : (
+                                    <span>Update name</span>
+                                )}
+                            </button>
                         </div>
                     </div>
                 </div>
             )}
 
+            {/* delete room modal */}
             {isDeleteOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsDeleteOpen(false)} />
+                    <div
+                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        onClick={() => setIsDeleteOpen(false)}
+                    />
                     <div className="relative w-full max-w-sm rounded-2xl border border-border bg-bg-surface p-6 shadow-2xl">
                         <div className="flex size-12 items-center justify-center rounded-full bg-red-500/10 text-red-500 mb-4"><span className="material-symbols-outlined">delete_forever</span></div>
                         <h3 className="text-lg font-bold">Delete Canvas?</h3>
                         <p className="mt-2 text-sm text-text-subtle">This action is permanent and cannot be undone.</p>
                         <div className="mt-6 flex justify-end gap-3">
-                            <button onClick={() => setIsDeleteOpen(false)} className="px-4 text-sm font-semibold text-text-subtle">Cancel</button>
-                            <button onClick={deleteRoom} className="h-10 rounded-lg bg-red-500 px-6 text-sm font-bold text-white hover:bg-red-600">Confirm Delete</button>
+                            <button
+                                onClick={() => setIsDeleteOpen(false)}
+                                disabled={isLoading}
+                                className="px-4 text-sm font-semibold text-text-subtle cursor-pointer disabled:cursor-not-allowed disabled:opacity-70">
+                                Cancel
+                            </button>
+                            <button
+                                onClick={deleteRoom}
+                                disabled={isLoading}
+                                className="h-10 rounded-lg bg-red-500 px-6 text-sm font-bold text-white hover:bg-red-600 cursor-pointer disabled:cursor-not-allowed disabled:opacity-70">
+
+                                {isLoading ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="size-4 animate-spin rounded-full border-2 border-bg-app/30 border-t-bg-app" />
+                                        <span>Deleting canvas...</span>
+                                    </div>
+                                ) : (
+                                    <span>Confirm Delete</span>
+                                )}
+                            </button>
                         </div>
                     </div>
                 </div>
