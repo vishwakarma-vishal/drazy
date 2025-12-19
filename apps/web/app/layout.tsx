@@ -1,6 +1,7 @@
 import { AuthProvider } from "@/auth/AuthContext";
 import "./globals.css";
 import type { Metadata } from "next";
+import { Toaster } from "@/components/common/Toaster";
 
 export const metadata: Metadata = {
   title: "DRAZY",
@@ -44,6 +45,7 @@ export default function RootLayout({
       </head>
 
       <body className="font-display bg-bg-app text-text-main antialiased subpixel-antialiased overflow-x-hidden transition-colors duration-200 selection:bg-primary/20 dark:selection:bg-primary/30 selection:text-primary">
+        <Toaster />
         <AuthProvider>
           {children}
         </AuthProvider>
