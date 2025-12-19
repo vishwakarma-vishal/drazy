@@ -3,6 +3,7 @@ import { CanvasDrawer } from "../draw/CanvasDrawer";
 import Toolbar from "./Toolbar";
 import ZoomControls from "./ZoomControls";
 import { KEY_ZOOM_STEP_PERCENT } from "../constants/zoom";
+import Link from "next/link";
 
 export const Canvas = ({ socket, roomId }: { socket: WebSocket, roomId: string }) => {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -110,6 +111,14 @@ export const Canvas = ({ socket, roomId }: { socket: WebSocket, roomId: string }
 
     return (
         <div className="relative">
+            {/* back to dashboard */}
+            <Link
+                href="/dashboard"
+                className="fixed left-4 top-4 z-50 flex size-9 items-center justify-center rounded-lg border border-border bg-bg-surface text-text-subtle shadow-sm transition-all hover:text-primary active:scale-95 md:left-6 md:top-6 md:size-10 md:rounded-xl"
+            >
+                <span className="material-symbols-outlined text-[18px] md:text-[20px]">arrow_back</span>
+            </Link>
+
             <canvas
                 ref={canvasRef}
                 className="bg-black"
@@ -118,10 +127,11 @@ export const Canvas = ({ socket, roomId }: { socket: WebSocket, roomId: string }
             >
             </canvas>
 
-            {/* Simple Zoom Controls */}
             <ZoomControls drawerRef={drawerRef} canvasRef={canvasRef} />
 
-            <Toolbar setSelectedColor={setSelectedColor} setSelectedShapeType={setSelectedShapeType} selectedColor={selectedColor} />
+            <Toolbar
+                setSelectedColor={setSelectedColor} setSelectedShapeType={setSelectedShapeType} selectedColor={selectedColor}
+                selectedShapeType={selectedShapeType} />
         </div>
     )
 }

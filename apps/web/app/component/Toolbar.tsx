@@ -1,59 +1,55 @@
 "use client";
-
-import { BiRectangle } from "react-icons/bi";
-import { FaRegCircle } from "react-icons/fa";
-import { LuMinus, LuPen } from "react-icons/lu";
-import { GoArrowUpRight } from "react-icons/go";
-import { Dispatch, SetStateAction, useEffect } from "react";
+import { Dispatch, SetStateAction } from "react";
 import { ShapeTypes } from "../constants/common";
-import { IoText } from "react-icons/io5";
 
 interface ToolbarProps {
   setSelectedColor: Dispatch<SetStateAction<string>>;
   setSelectedShapeType: Dispatch<SetStateAction<string>>;
   selectedColor: string;
+  selectedShapeType: string;
 }
 
-export default function Toolbar({ setSelectedColor, selectedColor, setSelectedShapeType }: ToolbarProps) {
+export default function Toolbar({ setSelectedColor, selectedColor, setSelectedShapeType, selectedShapeType }: ToolbarProps) {
+  const tools = [
+    { type: ShapeTypes.RECTANGLE, icon: "rectangle" },
+    { type: ShapeTypes.ELLIPSE, icon: "circle" },
+    { type: ShapeTypes.LINE, icon: "horizontal_rule" },
+    { type: ShapeTypes.ARROW, icon: "north_east" },
+    { type: ShapeTypes.PEN, icon: "edit" },
+    { type: ShapeTypes.TEXT, icon: "title" },
+  ];
 
   return (
-    <div className="absolute left-1/2 -translate-x-1/2 bottom-[20px] 
-                    bg-white/10 backdrop-blur-md text-white 
-                    rounded-full shadow-lg border border-white/20
-                    flex items-center gap-4 px-5 py-2">
+    <div className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 items-center gap-0.5 rounded-xl border border-border bg-bg-surface/90 p-1.5 shadow-2xl backdrop-blur-md md:bottom-6 md:gap-1 md:rounded-2xl md:p-2">
+      {/* tools */}
+      {tools.map((tool) => (
+        <button
+          key={tool.type}
+          onClick={() => setSelectedShapeType(tool.type)}
+          className={`flex size-8 items-center justify-center rounded-lg transition-all md:size-10 md:rounded-xl ${selectedShapeType === tool.type
+            ? "bg-primary text-primaryContrast shadow-md scale-105 md:scale-110"
+            : "text-text-subtle hover:bg-bg-app hover:text-text-main"
+            }`}
+        >
+          <span className="material-symbols-outlined text-[20px] md:text-[22px]">{tool.icon}</span>
+        </button>
+      ))}
 
-      <button onClick={() => setSelectedShapeType(ShapeTypes.RECTANGLE)} className="p-2 rounded-full hover:bg-white/20 transition">
-        <BiRectangle className="text-2xl" />
-      </button>
+      <div className="mx-1 h-5 w-px bg-border md:mx-2 md:h-6" />
 
-      <button onClick={() => setSelectedShapeType(ShapeTypes.ELLIPSE)} className="p-2 rounded-full hover:bg-white/20 transition">
-        <FaRegCircle className="text-2xl" />
-      </button>
-
-      <button onClick={() => setSelectedShapeType(ShapeTypes.LINE)} className="p-2 rounded-full hover:bg-white/20 transition">
-        <LuMinus className="text-2xl" />
-      </button>
-
-      <button onClick={() => setSelectedShapeType(ShapeTypes.ARROW)} className="p-2 rounded-full hover:bg-white/20 transition">
-        <GoArrowUpRight className="text-2xl" />
-      </button>
-
-      <button onClick={() => setSelectedShapeType(ShapeTypes.PEN)} className="p-2 rounded-full hover:bg-white/20 transition">
-        <LuPen className="text-2xl" />
-      </button>
-
-      <button onClick={() => setSelectedShapeType(ShapeTypes.TEXT)} className="p-2 rounded-full hover:bg-white/20 transition">
-        <IoText className="text-2xl" />
-      </button>
-
-      {/* Color Picker */}
-      <input
-        type="color"
-        value={selectedColor}
-        onChange={(e) => setSelectedColor(e.target.value)}
-        className="inline-block w-8 h-8 rounded-full cursor-pointer border-none
-                   bg-transparent p-0 overflow-hidden outline-none"
-      />
+      {/* color picker */}
+      <div className="relative flex size-8 items-center justify-center md:size-10">
+        <input
+          type="color"
+          value={selectedColor}
+          onChange={(e) => setSelectedColor(e.target.value)}
+          className="absolute inset-0 size-full cursor-pointer opacity-0"
+        />
+        <div
+          className="size-5 rounded-full border-2 border-white shadow-sm ring-1 ring-black/10 md:size-6"
+          style={{ backgroundColor: selectedColor }}
+        />
+      </div>
     </div>
   );
 }

@@ -153,7 +153,7 @@ export default function Dashboard() {
                                 {filteredRooms.map((room) => (
                                     <div key={room.id} className="group relative flex h-64 flex-col overflow-hidden rounded-2xl border border-border bg-bg-surface transition-all duration-300 hover:border-primary/40 hover:shadow-dynamic-primary">
                                         {/* Canvas Link */}
-                                        <Link href={`http://localhost:3002/room/${room.id}/${room.slug}`} className="relative flex flex-1 items-center justify-center bg-bg-app overflow-hidden cursor-pointer">
+                                        <Link href={`/room/${room.id}/${room.slug}`} className="relative flex flex-1 items-center justify-center bg-bg-app overflow-hidden cursor-pointer">
                                             <div className="grid-bg-pattern absolute inset-0 opacity-10" />
                                             <div className="size-20 rounded-xl border border-border bg-bg-surface shadow-sm rotate-3 group-hover:rotate-0 group-hover:scale-110 transition-transform duration-500" />
                                         </Link>
@@ -196,7 +196,7 @@ export default function Dashboard() {
 
                                 {filteredRooms.map((room) => (
                                     <div key={room.id} className="group relative flex items-center justify-between border-b border-border p-4 transition-all last:border-none hover:bg-bg-app/50">
-                                        <Link href={`http://localhost:3002/room/${room.id}/${room.slug}`} className="flex items-center gap-4 min-w-0 flex-1 cursor-pointer">
+                                        <Link href={`/room/${room.id}/${room.slug}`} className="flex items-center gap-4 min-w-0 flex-1 cursor-pointer">
                                             <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border bg-bg-app text-primary transition-transform group-hover:scale-105">
                                                 <span className="material-symbols-outlined text-[22px]">description</span>
                                             </div>
