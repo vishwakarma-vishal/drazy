@@ -1,5 +1,5 @@
 import { ShapeTypes } from "../constants/common";
-import { fetchShapes } from "./ShapeService";
+import { convertData } from "./ShapeService";
 import { ShapeFactory } from "./ShapeFactory";
 import { BaseShape } from "./shapes/BaseShape";
 import { TextShape } from "./shapes/TextShape";
@@ -49,8 +49,10 @@ export class CanvasDrawer {
     // to add infinite canvas
     camera: Camera;
 
+    private onDataLoaded: () => void;
 
-    constructor(canvas: HTMLCanvasElement, socket: WebSocket, roomId: string, selectedShapeType: string, selectedColor: string) {
+
+    constructor(canvas: HTMLCanvasElement, socket: WebSocket, roomId: string, selectedShapeType: string, selectedColor: string, onDataLoaded: () => void) {
         this.canvas = canvas;
         this.socket = socket;
         this.roomId = roomId;
@@ -61,12 +63,12 @@ export class CanvasDrawer {
         if (!ctx) throw new Error("Cannot get canvas context");
         this.ctx = ctx;
 
-        this.getCanvasContent();
         this.addEventListeners();
         this.websocketConnection();
 
         this.shapeFactory = new ShapeFactory(this.ctx);
         this.camera = new Camera();
+        this.onDataLoaded = onDataLoaded;
     }
 
     // render shapes on the canvas
@@ -155,12 +157,7 @@ export class CanvasDrawer {
     }
 
     public refreshRender() {
-        requestAnimationFrame(() => this.drawShapes());
-    }
-
-    // get roomshape form the BE and render then on canvas
-    private async getCanvasContent() {
-        this.shapes = await fetchShapes(this.roomId, this.ctx);
+        // requestAnimationFrame(() => this.drawShapes());
         this.drawShapes();
     }
 
@@ -170,6 +167,13 @@ export class CanvasDrawer {
             const payload = JSON.parse(message.data);
 
             const { type, action, shape } = payload;
+
+            // intial content load
+            if (type === "initialData") {
+                this.shapes = convertData(payload.data, this.ctx);
+                this.drawShapes();
+                this.onDataLoaded();
+            }
 
             // create status-pending
             if (type === "shape" && action === "create") {

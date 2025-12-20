@@ -1,6 +1,6 @@
 import { WebSocket } from "ws";
 import { state } from "../state/state";
-import { removeFromDB, storeInDB } from "./dbService";
+import { getInitialData, removeFromDB, storeInDB } from "./dbService";
 import { broadcastMessage } from "./wsService";
 import { batchManager } from "./batchManager";
 import { logger } from "../utils/logger";
@@ -123,4 +123,14 @@ const saveInDBAndConfirm = async (ws: WebSocket, roomId: string, tempId: string,
     broadcastMessage(ws, roomId, payload, true);
 }
 
-export { handleShape, saveInDBAndConfirm };
+const handleIntialData = async (ws: WebSocket, roomId: string) => {
+    const intialData = await getInitialData(roomId);
+
+    // send initial data
+    ws.send(JSON.stringify({
+        type: "initialData",
+        data: intialData
+    }));
+}
+
+export { handleShape, saveInDBAndConfirm, handleIntialData };

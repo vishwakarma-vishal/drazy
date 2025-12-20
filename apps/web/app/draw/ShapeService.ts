@@ -1,4 +1,4 @@
-import axios from "axios";
+
 import { BaseShape } from "./shapes/BaseShape";
 import { Rectangle } from "./shapes/Rectangle";
 import { Line } from "./shapes/Line";
@@ -8,16 +8,10 @@ import { Arrow } from "./shapes/Arrow";
 import { TextShape } from "./shapes/TextShape";
 import { devLogger } from "../utils/logger";
 
-export const fetchShapes = async (roomId: string, ctx: CanvasRenderingContext2D) => {
-    try {
-        const token = localStorage.getItem("token");
-        const response = await axios.get(`${process.env.HTTP_BACKEND_URL}/room/${roomId}`, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
+export const convertData = (initialData: any, ctx: CanvasRenderingContext2D) => {
 
-        const data = response.data.content;
+    try {
+        const data = initialData;
 
         let shapes: BaseShape[] = [];
 
@@ -48,13 +42,13 @@ export const fetchShapes = async (roomId: string, ctx: CanvasRenderingContext2D)
                 return new TextShape(prop.id, prop.tempId, "confirmed", prop.startX, prop.startY, prop.text, prop.fontSize, prop.color, prop.maxWidth, ctx);
             }
             else {
-                devLogger.warn("ShapeService", "fetchShape", "Unknown shape received, skipping item", item);
+                devLogger.warn("ShapeService", "convertData", "Unknown shape received, skipping item", item);
             }
         });
 
         return shapes;
     } catch (error) {
-        devLogger.error("ShapeService", "fetchShape", "Something went wrong", error);
+        devLogger.error("ShapeService", "convertData", "Something went wrong", error);
         return [];
     }
 }

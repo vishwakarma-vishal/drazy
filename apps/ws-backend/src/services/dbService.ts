@@ -111,5 +111,32 @@ const removeFromDB = async (id: string): Promise<boolean> => {
     }
 }
 
-export { checkRoomStatus, storeInDB, removeFromDB };
+const getInitialData = async (id: string): Promise<any[]> => {
+    try {
+        const room = await client.room.findUnique({
+            where: { id },
+            select: {
+                Chats: {
+                    include: {
+                        rectangle: true,
+                        ellipse: true,
+                        line: true,
+                        arrow: true,
+                        text: true,
+                        stroke: true
+                    }
+                }
+            }
+        });
+
+        // logger.info("dbService", "getInitialdata", "intial data", room);
+
+        return room?.Chats ?? [];
+    } catch (error) {
+        logger.error("dbService", "getInitialdata", "Error while getting intial data from the DB, error:", error)
+        return [];
+    }
+}
+
+export { checkRoomStatus, storeInDB, removeFromDB, getInitialData };
 

@@ -7,3 +7,5 @@ export const ShapeTypes = {
     ARROW: "ARROW",
     TEXT: "TEXT"
 } as const;
+
+export const MAX_RETRIES = 5;

@@ -5,7 +5,14 @@ import ZoomControls from "./ZoomControls";
 import { KEY_ZOOM_STEP_PERCENT } from "../constants/zoom";
 import Link from "next/link";
 
-export const Canvas = ({ socket, roomId }: { socket: WebSocket, roomId: string }) => {
+interface CanvasProps {
+    socket: WebSocket;
+    roomId: string;
+    isDataLoaded: boolean;
+    setIsDataLoaded: (val: boolean) => void;
+}
+
+export const Canvas = ({ socket, roomId, isDataLoaded, setIsDataLoaded }: CanvasProps) => {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const drawerRef = useRef<CanvasDrawer | null>(null);
 
@@ -17,7 +24,14 @@ export const Canvas = ({ socket, roomId }: { socket: WebSocket, roomId: string }
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        const drawer = new CanvasDrawer(canvas, socket, roomId, selectedShapeType, selectedColor);
+        const drawer = new CanvasDrawer(
+            canvas,
+            socket,
+            roomId,
+            selectedShapeType,
+            selectedColor,
+            () => setIsDataLoaded(true)
+        );
         drawerRef.current = drawer;
 
         // cleanup
@@ -110,28 +124,43 @@ export const Canvas = ({ socket, roomId }: { socket: WebSocket, roomId: string }
     }, []);
 
     return (
-        <div className="relative">
-            {/* back to dashboard */}
-            <Link
-                href="/dashboard"
-                className="fixed left-4 top-4 z-50 flex size-9 items-center justify-center rounded-lg border border-border bg-bg-surface text-text-subtle shadow-sm transition-all hover:text-primary active:scale-95 md:left-6 md:top-6 md:size-10 md:rounded-xl"
-            >
-                <span className="material-symbols-outlined text-[18px] md:text-[20px]">arrow_back</span>
-            </Link>
-
+        <div className="relative h-screen w-full overflow-hidden">
             <canvas
                 ref={canvasRef}
-                className="bg-black"
+                className={`bg-black transition-opacity duration-700 ease-in-out ${isDataLoaded ? "opacity-100" : "opacity-0 cursor-not-allowed"
+                    }`}
                 width={window.innerWidth}
                 height={window.innerHeight}
+
             >
             </canvas>
 
-            <ZoomControls drawerRef={drawerRef} canvasRef={canvasRef} />
+            {/* showing syncing message till the initial data load */}
+            {!isDataLoaded && (
+                <div className={`absolute bottom-6 left-6 flex items-center gap-2 rounded-full bg-bg-surface/80 px-4 py-2 backdrop-blur-md border border-border transition-all duration-500 ${isDataLoaded && "opacity-100 translate-y-0"
+                    }`}>
+                    <div className="size-2 animate-pulse rounded-full bg-primary" />
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-text-subtle">
+                        Syncing Shapes...
+                    </span>
+                </div>
+            )}
 
-            <Toolbar
-                setSelectedColor={setSelectedColor} setSelectedShapeType={setSelectedShapeType} selectedColor={selectedColor}
-                selectedShapeType={selectedShapeType} />
+            <div className={`transition-opacity duration-1000 ${isDataLoaded ? "opacity-100" : "opacity-50 cursor-not-allowed"}`}>
+                {/* back to dashboard */}
+                <Link
+                    href="/dashboard"
+                    className="fixed left-4 top-4 z-50 flex size-9 items-center justify-center rounded-lg border border-border bg-bg-surface text-text-subtle shadow-sm transition-all hover:text-primary active:scale-95 md:left-6 md:top-6 md:size-10 md:rounded-xl"
+                >
+                    <span className="material-symbols-outlined text-[18px] md:text-[20px]">arrow_back</span>
+                </Link>
+
+                <ZoomControls drawerRef={drawerRef} canvasRef={canvasRef} />
+
+                <Toolbar
+                    setSelectedColor={setSelectedColor} setSelectedShapeType={setSelectedShapeType} selectedColor={selectedColor}
+                    selectedShapeType={selectedShapeType} />
+            </div>
         </div>
     )
 }
