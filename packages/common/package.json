@@ -1,8 +1,9 @@
 {
   "name": "@repo/common",
   "version": "1.0.0",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "type": "module",
+   "main": "dist/index.js",
+   "types": "dist/index.d.ts",
   "scripts": {
     "i": "pnpm i",
     "test": "echo \"Error: no test specified\" && exit 1",

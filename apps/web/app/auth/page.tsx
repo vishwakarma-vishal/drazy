@@ -64,7 +64,7 @@ export default function Auth() {
         setIsLoading(true);
 
         try {
-            const responseData = await axios.post(`${process.env.HTTP_BACKEND_URL}/auth/signup`, {
+            const responseData = await axios.post(`${process.env.NEXT_PUBLIC_HTTP_BACKEND_URL}/auth/signup`, {
                 name: "dummyUser",
                 email: credentials.email,
                 password: credentials.password
@@ -102,7 +102,7 @@ export default function Auth() {
         setIsLoading(true);
 
         try {
-            const responseData = await axios.post(`${process.env.HTTP_BACKEND_URL}/auth/signin`, {
+            const responseData = await axios.post(`${process.env.NEXT_PUBLIC_HTTP_BACKEND_URL}/auth/signin`, {
                 email: credentials.email,
                 password: credentials.password
             });
@@ -121,9 +121,9 @@ export default function Auth() {
         } catch (error) {
             if (error instanceof AxiosError) {
                 const errorResponseData = error.response?.data;
-                toast.warn(errorResponseData.message);
+                toast.warn(errorResponseData?.message || "Something went wrong. Try again later.");
 
-                devLogger.error("auth", "SignIn", errorResponseData.message, error);
+                devLogger.error("auth", "SignIn", errorResponseData?.message || "Something went wrong. Try again later.", error);
                 return;
             }
             toast.error("Something went wrong. Try again later.");

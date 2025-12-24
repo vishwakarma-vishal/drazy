@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { MAX_RETRIES } from "../constant";
 
-const WS_BACKEND = process.env.WS_BACKEND_URL;
+const WS_BACKEND = process.env.NEXT_PUBLIC_WS_BACKEND_URL;
 if (!WS_BACKEND) throw new Error("WS_BACKEND must be defined in environment variables");
 
 type wsStatus = "INITIALIZING" | "CONNECTING" | "OPEN" | "CLOSING" | "CLOSED" | "UNAUTHORIZED" | "MAX_RETRIES_REACHED";

@@ -1,3 +1,3 @@
-import log from "./utils/logger";
+import log from "./utils/logger.js";
 
 export { log };

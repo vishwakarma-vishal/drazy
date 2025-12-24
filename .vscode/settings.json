@@ -8,7 +8,7 @@
   "editor.suggestOnTriggerCharacters": false,
   "editor.acceptSuggestionOnEnter": "off",
   "editor.tabCompletion": "off",
-  "editor.wordBasedSuggestions": false,
+  "editor.wordBasedSuggestions": "off",
   "editor.snippetSuggestions": "none",
   "editor.parameterHints.enabled": false,
   "editor.inlineSuggest.enabled": false,

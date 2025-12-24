@@ -1,6 +1,6 @@
 import { client } from "@repo/db";
-import { logger } from "../utils/logger";
-import { state } from "../state/state";
+import { logger } from "../utils/logger.js";
+import { state } from "../state/state.js";
 
 const checkRoomStatus = async (roomId: string): Promise<boolean> => {
     try {

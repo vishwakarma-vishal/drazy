@@ -1,6 +1,6 @@
-import { state } from "./state";
+import { state } from "./state.js";
 import { WebSocket } from "ws";
-import { checkRoomStatus } from "../services/dbService";
+import { checkRoomStatus } from "../services/dbService.js";
 
 const joinRoom = async (userId: string, roomId: string) => {
     const isRoomExist = await checkRoomStatus(roomId);

@@ -1,9 +1,9 @@
 import { WebSocket } from "ws";
-import { state } from "../state/state";
-import { getInitialData, removeFromDB, storeInDB } from "./dbService";
-import { broadcastMessage } from "./wsService";
-import { batchManager } from "./batchManager";
-import { logger } from "../utils/logger";
+import { state } from "../state/state.js";
+import { getInitialData, removeFromDB, storeInDB } from "./dbService.js";
+import { broadcastMessage } from "./wsService.js";
+import { batchManager } from "./batchManager.js";
+import { logger } from "../utils/logger.js";
 
 const handleShape = (ws: WebSocket, parsedData: any) => {
     logger.info("appService", "handleShape", "Shape payload received:", parsedData);

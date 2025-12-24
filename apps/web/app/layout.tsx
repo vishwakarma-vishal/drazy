@@ -6,6 +6,9 @@ import { Toaster } from "@/components/common/Toaster";
 export const metadata: Metadata = {
   title: "DRAZY",
   description: "Collaborative canvas",
+  icons: {
+    icon: './favicon.png'
+  }
 };
 
 export default function RootLayout({

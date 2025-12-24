@@ -1,4 +1,4 @@
-import { state } from "../state/state";
+import { state } from "../state/state.js";
 import { log } from "@repo/common";
 
 const makeLogger = (scope: string) => ({

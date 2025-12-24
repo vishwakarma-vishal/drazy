@@ -4,7 +4,7 @@ import { getToken } from "@/auth/token";
 import { forceLogout } from "@/auth/logout";
 
 const http = axios.create({
-    baseURL: process.env.HTTP_BACKEND_URL,
+    baseURL: process.env.NEXT_PUBLIC_HTTP_BACKEND_URL,
 });
 
 http.interceptors.request.use((config) => {

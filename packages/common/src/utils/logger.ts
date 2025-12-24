@@ -1,11 +1,19 @@
+import path from "path";
+import dotenv from "dotenv";
+import { fileURLToPath } from "url";
 let DEBUG_SCOPES: string;
 
 if (typeof window === "undefined") {
     // server-side (http, ws, next.js server)
     try {
         // safe only on Node
-        const dotenv = require("dotenv");
-        dotenv?.config({ path: '../../.env' });
+        const __filename = fileURLToPath(import.meta.url);
+        const __dirname = path.dirname(__filename);
+
+        dotenv.config({
+            path: path.resolve(__dirname, "../../../../.env"),
+            override: process.env.NODE_ENV !== "production"
+        });
     } catch { }
     DEBUG_SCOPES = process.env.DEBUG_SCOPES || "";
 } else {

@@ -1,6 +1,6 @@
 // batchManager.ts
 import { client } from "@repo/db";
-import { logger } from "../utils/logger";
+import { logger } from "../utils/logger.js";
 
 const BATCH_INTERVAL = 2000; // 2 second
 const MAX_BATCH_SIZE = 20;

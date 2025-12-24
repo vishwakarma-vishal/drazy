@@ -1,7 +1,7 @@
 import { JwtPayload } from "jsonwebtoken";
 import jwt from "jsonwebtoken";
 import { IncomingMessage } from "http";
-import { logger } from "./logger";
+import { logger } from "./logger.js";
 
 interface MyJwtToken extends JwtPayload {
     id: string;

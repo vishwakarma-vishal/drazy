@@ -1,6 +1,6 @@
 import { WebSocket } from "ws";
-import { state } from "../state/state";
-import { logger } from "../utils/logger";
+import { state } from "../state/state.js";
+import { logger } from "../utils/logger.js";
 
 const broadcastMessage = (ws: WebSocket, roomId: string, payload: any, toAll: boolean) => {
     const userIds = state.getRoom(roomId);

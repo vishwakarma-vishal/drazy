@@ -1,10 +1,19 @@
 import { WebSocketServer } from "ws";
-import dotenv from "dotenv";
-dotenv.config({ path: "../../.env" });
+import { validateUser } from "./utils/validate.js";
+import { addUser, joinRoom, leaveRoom, removeUser } from "./state/manage.js";
+import { handleIntialData, handleShape } from "./services/appService.js";
 
-import { validateUser } from "./utils/validate";
-import { addUser, joinRoom, leaveRoom, removeUser } from "./state/manage";
-import { handleIntialData, handleShape } from "./services/appService";
+import path from "path";
+import dotenv from "dotenv";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({
+    path: path.resolve(__dirname, "../../../.env"),
+    override: process.env.NODE_ENV !== "production"
+});
 
 const WS_PORT = process.env.WS_PORT;
 
