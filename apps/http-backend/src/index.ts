@@ -23,6 +23,7 @@ if (process.env.NODE_ENV === "production" && !process.env.FRONTEND_URL) {
     throw new Error("FRONTEND_URL must be defined in production");
 }
 
+console.log("test");
 const FRONTEND_URL = process.env.NODE_ENV === "production" ? process.env.FRONTEND_URL! : `http://localhost:3000`;
 
 app.use(cors({
