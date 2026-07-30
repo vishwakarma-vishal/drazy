@@ -275,7 +275,7 @@ export class CanvasDrawer {
     };
 
 
-    private handleDown = (e: MouseEvent) => {
+    private handleDown = (e: MouseEvent | PointerEvent) => {
         this.clicked = true;
         const p = this.camera.clientToWorld(e.clientX, e.clientY, this.canvas);
         this.startX = p.worldX;
@@ -323,7 +323,7 @@ export class CanvasDrawer {
         }
     }
 
-    private handleMove = (e: MouseEvent) => {
+    private handleMove = (e: MouseEvent | PointerEvent) => {
         if (!this.clicked) return;
 
         const p = this.camera.clientToWorld(e.clientX, e.clientY, this.canvas);
@@ -411,7 +411,7 @@ export class CanvasDrawer {
         this.ctx.restore();
     }
 
-    private handleUp = (e: MouseEvent) => {
+    private handleUp = (e: MouseEvent | PointerEvent) => {
         if (!this.clicked) return;
 
         // convert client coords -> world coords
@@ -603,16 +603,19 @@ export class CanvasDrawer {
     }
 
     addEventListeners() {
-        this.canvas.addEventListener("mousedown", this.handleDown);
-        this.canvas.addEventListener("mousemove", this.handleMove);
-        this.canvas.addEventListener("mouseup", this.handleUp);
+        this.canvas.addEventListener("pointerdown", this.handleDown as EventListener);
+        this.canvas.addEventListener("pointermove", this.handleMove as EventListener);
+        this.canvas.addEventListener("pointerup", this.handleUp as EventListener);
+        this.canvas.addEventListener("pointercancel", this.handleUp as EventListener);
         this.canvas.addEventListener("wheel", this.handleWheel, { passive: false });
+        this.canvas.style.touchAction = "none";
     }
 
     destroy() {
-        this.canvas.removeEventListener("mousedown", this.handleDown);
-        this.canvas.removeEventListener("mousemove", this.handleMove);
-        this.canvas.removeEventListener("mouseup", this.handleUp);
+        this.canvas.removeEventListener("pointerdown", this.handleDown as EventListener);
+        this.canvas.removeEventListener("pointermove", this.handleMove as EventListener);
+        this.canvas.removeEventListener("pointerup", this.handleUp as EventListener);
+        this.canvas.removeEventListener("pointercancel", this.handleUp as EventListener);
         this.canvas.removeEventListener("wheel", this.handleWheel);
     }
 }
