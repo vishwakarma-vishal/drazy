@@ -17,11 +17,11 @@
   "dependencies": {
     "@repo/typescript-config": "workspace:*",
     "@repo/common": "workspace:*",
-    "@types/jsonwebtoken": "^9.0.10",
-    "@types/ws": "^8.18.1",
-    "dotenv": "^17.2.2",
-    "jsonwebtoken": "^9.0.2",
-    "ws": "^8.18.3",
+    "@types/jsonwebtoken": "9.0.10",
+    "@types/ws": "8.18.1",
+    "dotenv": "17.2.2",
+    "jsonwebtoken": "9.0.2",
+    "ws": "8.18.3",
     "@repo/db": "workspace:*"
   }
 }

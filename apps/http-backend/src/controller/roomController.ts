@@ -28,14 +28,12 @@ const addNewRoom = async (req: extendedRequest, res: Response) => {
             slug: createdRoom.slug,
             roomId: createdRoom.id
         });
-    } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            if (error.code === 'P2002') {
-                return res.status(409).json({
-                    success: false,
-                    message: "You already have a room with this name."
-                });
-            }
+    } catch (error: any) {
+        if (error.code === 'P2002') {
+            return res.status(409).json({
+                success: false,
+                message: "You already have a room with this name."
+            });
         }
 
         res.status(500).json({

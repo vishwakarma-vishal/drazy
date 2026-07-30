@@ -2,8 +2,8 @@
   "name": "@repo/common",
   "version": "1.0.0",
   "type": "module",
-   "main": "dist/index.js",
-   "types": "dist/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "i": "pnpm i",
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -15,8 +15,8 @@
   "description": "",
   "dependencies": {
     "@repo/typescript-config": "workspace:*",
-    "@types/node": "^24.7.2",
-    "dotenv": "^17.2.2",
-    "typescript": "^5.9.3"
+    "@types/node": "24.7.2",
+    "dotenv": "17.2.2",
+    "typescript": "5.9.3"
   }
 }

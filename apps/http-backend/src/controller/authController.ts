@@ -34,8 +34,8 @@ const signUpController = async (req: Request, res: Response) => {
             message: "user signup successfully.",
             token: token
         });
-    } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+    } catch (error: any) {
+        if (error.code === "P2002") {
             logger.error("authController", "signUpController", "User already exist", error);
             return res.status(400).json({
                 success: false,
