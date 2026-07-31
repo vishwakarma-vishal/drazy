@@ -83,7 +83,7 @@ const getCurrentUserRooms = async (req: extendedRequest, res: Response) => {
 
 const getRoomContent = async (req: extendedRequest, res: Response) => {
     try {
-        const { id } = req.params;
+        const id = req.params.id as string;
 
         const room = await client.room.findUnique({
             where: { id }
@@ -126,7 +126,7 @@ const getRoomContent = async (req: extendedRequest, res: Response) => {
 const updateRoomName = async (req: extendedRequest, res: Response) => {
     try {
         const userId = req.userId;
-        const { id } = req.params;
+        const id = req.params.id as string;
         const { newSlug } = req.body;
 
         if (!newSlug) {
@@ -179,7 +179,7 @@ const updateRoomName = async (req: extendedRequest, res: Response) => {
 const deleteRoom = async (req: extendedRequest, res: Response) => {
     try {
         const userId = req.userId;
-        const { id } = req.params;
+        const id = req.params.id as string;
 
         const room = await client.room.findUnique({
             where: { id }
